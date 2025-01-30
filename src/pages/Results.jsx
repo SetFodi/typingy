@@ -1,14 +1,41 @@
-import React from "react";
+// frontend/src/pages/Results.jsx
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-const Profile = () => {
-  const data = JSON.parse(localStorage.getItem("typingData")) || { tests: [] };
+const Results = () => {
+  const [data, setData] = useState({ tests: [] });
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchResults = async () => {
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        try {
+          const response = await fetch(`/api/results?userId=${userId}`);
+          const result = await response.json();
+          if (result.success) {
+            setData({ tests: result.data });
+            console.log("Fetched Results:", result.data); // Debugging
+          } else {
+            console.error("Failed to fetch results:", result.message);
+          }
+        } catch (error) {
+          console.error("Error fetching results:", error);
+        }
+      } else {
+        console.warn("No userId found in localStorage.");
+      }
+      setLoading(false);
+    };
+    fetchResults();
+  }, []);
+
+  // Compute Statistics
   const totalTests = data.tests.length;
 
   const avgWPM =
     totalTests > 0
-      ? (data.tests.reduce((sum, test) => sum + parseInt(test.wpm), 0) / totalTests).toFixed(2)
+      ? (data.tests.reduce((sum, test) => sum + parseInt(test.wpm, 10), 0) / totalTests).toFixed(2)
       : 0;
 
   const avgAccuracy =
@@ -19,15 +46,23 @@ const Profile = () => {
       : 0;
 
   const bestWPM =
-    totalTests > 0 ? Math.max(...data.tests.map((test) => parseInt(test.wpm))) : 0;
+    totalTests > 0 ? Math.max(...data.tests.map((test) => parseInt(test.wpm, 10))) : 0;
 
   const worstWPM =
-    totalTests > 0 ? Math.min(...data.tests.map((test) => parseInt(test.wpm))) : 0;
+    totalTests > 0 ? Math.min(...data.tests.map((test) => parseInt(test.wpm, 10))) : 0;
 
   const totalErrors =
     totalTests > 0
-      ? data.tests.reduce((sum, test) => sum + (test.errors || 0), 0)
+      ? data.tests.reduce((sum, test) => sum + (test.errorCount || 0), 0) // Use errorCount
       : 0;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-6">
+        <p className="text-2xl">Loading your results...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-6">
@@ -38,7 +73,7 @@ const Profile = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        Your Profile
+        Your Typing Results
       </motion.h1>
 
       {/* Statistics Section */}
@@ -55,6 +90,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-blue-500">Total Tests</h2>
           <p className="text-2xl">{totalTests}</p>
@@ -64,6 +103,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-green-500">Average WPM</h2>
           <p className="text-2xl">{avgWPM}</p>
@@ -73,6 +116,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-purple-500">Average Accuracy</h2>
           <p className="text-2xl">{avgAccuracy}%</p>
@@ -88,6 +135,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-yellow-500">Best WPM</h2>
           <p className="text-2xl">{bestWPM}</p>
@@ -97,6 +148,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-red-500">Worst WPM</h2>
           <p className="text-2xl">{worstWPM}</p>
@@ -106,6 +161,10 @@ const Profile = () => {
         <motion.div
           className="bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
           whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
         >
           <h2 className="text-3xl font-bold mb-2 text-pink-500">Total Errors</h2>
           <p className="text-2xl">{totalErrors}</p>
@@ -126,4 +185,4 @@ const Profile = () => {
   );
 };
 
-export default Profile;
+export default Results;

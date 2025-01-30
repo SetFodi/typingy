@@ -1,7 +1,8 @@
+// frontend/src/pages/TypingTest.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { simpleWords, intermediateWords } from "../wordLists";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 const themes = {
   default: {
@@ -85,10 +86,9 @@ const themes = {
   solarizedOsaka: {
     background: "bg-[#000a14]", // HSL(192, 100, 5)
     text: "text-[#d8dee9]", // HSL(186, 8, 55)
-    keyboard: "bg-[#001e28] text-[#5a6a73]", // HSL(192, 100, 11)
-    keyPressed: "bg-[#5e81ac] text-[#000000] shadow-[#5e81ac]", // Example accent (HSL-based color)
+    keyboard: "bg-[#001e28] text-[#5a6a73]",
+    keyPressed: "bg-[#5e81ac] text-[#000000] shadow-[#5e81ac]",
   },
-  
   rosePine: {
     background: "bg-rose-900",
     text: "text-rose-300",
@@ -115,9 +115,8 @@ const themes = {
   },
 };
 
-
-
 const TypingTest = () => {
+  // State Variables
   const [sentence, setSentence] = useState("");
   const [input, setInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(15);
@@ -126,21 +125,26 @@ const TypingTest = () => {
   const [typingMode, setTypingMode] = useState("simple");
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [errors, setErrors] = useState(0);
+  const [errorCount, setErrorCount] = useState(0); // Renamed from errors
   const [typedChars, setTypedChars] = useState(0);
   const [pressedKey, setPressedKey] = useState(null);
   const navigate = useNavigate();
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState("default");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Calculate number of words based on time
   const getWordCount = (seconds) => {
     const wordsPerMinute = 48; // Base rate of 48 words per minute
     return Math.ceil((seconds / 60) * wordsPerMinute);
   };
+
+  // Toggle Theme Modal
   const toggleThemeModal = () => {
     setIsThemeModalOpen((prev) => !prev);
   };
+
   // Generate a random sentence
   const generateSentence = (mode = typingMode, time = selectedTime) => {
     const wordPool = mode === "simple" ? simpleWords : intermediateWords;
@@ -151,18 +155,19 @@ const TypingTest = () => {
     setSentence(randomSentence);
     setInput("");
     setTypedChars(0);
-    setErrors(0);
+    setErrorCount(0); // Reset errorCount
     setElapsedTime(0);
     setTimeLeft(time);
     setIsFinished(false);
     setIsRunning(false);
   };
 
+  // Initialize the sentence when typing mode or selected time changes
   useEffect(() => {
     generateSentence(typingMode, selectedTime);
   }, [typingMode, selectedTime]);
 
-  // Handle timer
+  // Handle timer countdown
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -170,38 +175,104 @@ const TypingTest = () => {
         setElapsedTime((prev) => prev + 1);
       }, 1000);
       return () => clearInterval(timer);
-    } else if (timeLeft === 0) {
-      finishTest();
+    } else if (isRunning && timeLeft === 0) {
+      finishTest(errorCount); // Pass errorCount to finishTest
     }
   }, [isRunning, timeLeft]);
 
-  // Handle user input
+  // Handle user input changes
   const handleInputChange = (e) => {
     const value = e.target.value;
     if (!isRunning) setIsRunning(true);
     setInput(value);
     setTypedChars(value.length);
-    if (!sentence.startsWith(value)) setErrors((prev) => prev + 1);
-    if (value === sentence) finishTest();
+
+    // Calculate errors
+    const currentErrors = calculateErrors(value);
+    setErrorCount(currentErrors);
+
+    // Debugging
+    console.log("Current Input:", value);
+    console.log("Current Errors:", currentErrors);
+
+    // Auto-finish if the sentence is completed
+    if (value === sentence) finishTest(currentErrors); // Pass currentErrors here
   };
 
-  // Finish the test
-  const finishTest = () => {
-    setIsRunning(false);
-    setIsFinished(true);
-
-    const previousData = JSON.parse(localStorage.getItem("typingData")) || { tests: [] };
-    const newTest = {
-      wpm: elapsedTime > 0 ? ((typedChars / 5) / (elapsedTime / 60)).toFixed(0) : 0,
-      accuracy: typedChars > 0 ? (((typedChars - errors) / typedChars) * 100).toFixed(2) : 0,
-      errors,
-      duration: selectedTime
-    };
-    previousData.tests.push(newTest);
-    localStorage.setItem("typingData", JSON.stringify(previousData));
+  // Calculate the number of errors in the current input
+  const calculateErrors = (currentInput) => {
+    let errorCount = 0;
+    for (let i = 0; i < currentInput.length; i++) {
+      if (currentInput[i] !== sentence[i]) errorCount++;
+    }
+    return errorCount;
   };
 
-  // Handle key press
+  // Finish the test and save results
+ // frontend/src/pages/TypingTest.jsx
+// ... other imports ...
+
+const finishTest = async (currentErrors) => {
+  setIsRunning(false);
+  setIsFinished(true);
+
+  // Generate or retrieve user ID
+  let userId = localStorage.getItem("userId");
+  if (!userId) {
+    userId = crypto.randomUUID();
+    localStorage.setItem("userId", userId);
+  }
+
+  // Calculate WPM and Accuracy using currentErrors
+  const testAccuracy = typedChars > 0 ? (((typedChars - currentErrors) / typedChars) * 100).toFixed(2) : 0;
+  const testWpm = elapsedTime > 0
+    ? Math.floor((typedChars / 5) / (elapsedTime / 60))
+    : 0;
+
+  // Prepare the test data
+  const newTest = {
+    userId,
+    wpm: testWpm,
+    accuracy: Number(testAccuracy),
+    errorCount: Number(currentErrors), // Ensure this is 'errorCount'
+    duration: Number(selectedTime),
+  };
+
+  console.log("Sending Test Data:", newTest); // Debugging
+
+  // Save the test results to the API
+  setLoading(true);
+  setErrorMessage("");
+  try {
+    const response = await fetch('/api/results', { // Ensure proxy is set or use full URL
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newTest),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to save results.");
+    }
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message || "Failed to save results.");
+    }
+
+    // Optionally, handle successful save (e.g., log to console)
+    console.log("Results saved successfully:", result.data);
+  } catch (error) {
+    console.error("Error saving results:", error);
+    setErrorMessage(error.message);
+  }
+  setLoading(false);
+};
+
+
+  // Handle key presses for the on-screen keyboard UI
   const handleKeyDown = (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -212,98 +283,121 @@ const TypingTest = () => {
     }
   };
 
+  // Add event listener for key presses
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [typingMode, selectedTime]);
+  }, [typingMode, selectedTime, sentence, input]);
 
-  const accuracy = typedChars > 0 ? (((typedChars - errors) / typedChars) * 100).toFixed(2) : 0;
-  const wpm = elapsedTime > 0 ? ((typedChars / 5) / (elapsedTime / 60)).toFixed(0) : 0;
+  // Calculate accuracy and WPM for display
+  const displayAccuracy =
+    typedChars > 0 ? (((typedChars - errorCount) / typedChars) * 100).toFixed(2) : 0;
+  const displayWpm =
+    elapsedTime > 0
+      ? ((typedChars / 5) / (elapsedTime / 60)).toFixed(0)
+      : 0;
 
-return (
-  <div
-    className={`min-h-screen ${themes[selectedTheme].background} ${themes[selectedTheme].text} flex flex-col items-center justify-center p-6 relative`}
-  >
-    {/* Title */}
-    <motion.h1
-      className="text-5xl font-extrabold mb-8"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1 }}
+  return (
+    <div
+      className={`min-h-screen ${themes[selectedTheme].background} ${themes[selectedTheme].text} flex flex-col items-center justify-center p-6 relative`}
     >
-      Typing Test
-    </motion.h1>
+      {/* Title */}
+      <motion.h1
+        className="text-5xl font-extrabold mb-8"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
+      >
+        Typing Test
+      </motion.h1>
 
-    {/* Navigation Buttons */}
-    <div className="absolute top-6 right-6 flex gap-4">
-      <motion.button
-        onClick={() => navigate("/")}
-        className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-lg font-semibold shadow-lg"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        Go to Home
-      </motion.button>
-      <motion.button
-        onClick={toggleThemeModal}
-        className="px-6 py-3 bg-gray-500 hover:bg-gray-600 rounded-lg text-lg font-semibold shadow-lg"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        Select Theme
-      </motion.button>
-      <motion.button
-        onClick={() => navigate("/results")}
-        className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-lg font-semibold shadow-lg"
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-      >
-        View Results
-      </motion.button>
-    </div>
-
-    {/* Theme Selector Modal */}
-    {isThemeModalOpen && (
-      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-        <motion.div
-          className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full relative"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
+      {/* Navigation Buttons */}
+      <div className="absolute top-6 right-6 flex gap-4">
+        <motion.button
+          onClick={() => navigate("/")}
+          className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Go to Home"
         >
-          <h2 className="text-2xl font-bold mb-4 text-center text-orange-300">Choose a Theme</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {Object.keys(themes).map((theme) => (
-              <div
-                key={theme}
-                className={`cursor-pointer p-4 rounded-lg border-4 ${
-                  selectedTheme === theme ? "border-blue-500" : "border-transparent"
-                }`}
-                onClick={() => setSelectedTheme(theme)}
-                style={{
-                  background: themes[theme].background,
-                }}
-              >
-                <div
-                  className={`h-full flex items-center justify-center text-sm text-center ${
-                    themes[theme].text
-                  }`}
-                >
-                  {theme.charAt(0).toUpperCase() + theme.slice(1)}
-                </div>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={toggleThemeModal}
-            className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md mx-auto block"
-          >
-            Close
-          </button>
-        </motion.div>
+          Home
+        </motion.button>
+        <motion.button
+          onClick={toggleThemeModal}
+          className="px-6 py-3 bg-gray-500 hover:bg-gray-600 rounded-lg text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Select Theme"
+        >
+          Themes
+        </motion.button>
+        <motion.button
+          onClick={() => navigate("/results")}
+          className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="View Results"
+        >
+          Results
+        </motion.button>
       </div>
-    )}
 
+      {/* Theme Selector Modal */}
+      <AnimatePresence>
+        {isThemeModalOpen && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full relative"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="text-2xl font-bold mb-4 text-orange-300">
+                Choose a Theme
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {Object.keys(themes).map((theme) => (
+                  <motion.div
+                    key={theme}
+                    className={`cursor-pointer p-4 rounded-lg border-4 ${
+                      selectedTheme === theme ? "border-blue-500" : "border-transparent"
+                    }`}
+                    onClick={() => setSelectedTheme(theme)}
+                    style={{
+                      background: themes[theme].background,
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div
+                      className={`h-full flex items-center justify-center text-sm text-center ${
+                        themes[theme].text
+                      }`}
+                    >
+                      {theme.charAt(0).toUpperCase() + theme.slice(1)}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+              <motion.button
+                onClick={toggleThemeModal}
+                className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md mx-auto block"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-label="Close Theme Selector"
+              >
+                Close
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Test Configuration Options */}
       {!isRunning && !isFinished && (
@@ -315,36 +409,54 @@ return (
         >
           {/* Word Difficulty Options */}
           <div className="flex gap-4 mb-4">
-            <button
+            <motion.button
               onClick={() => setTypingMode("simple")}
               className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
-                typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+                typingMode === "simple"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-700 text-gray-300"
               }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-pressed={typingMode === "simple"}
+              aria-label="Select Simple Words"
             >
               Simple Words
-            </button>
-            <button
+            </motion.button>
+            <motion.button
               onClick={() => setTypingMode("intermediate")}
               className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
-                typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+                typingMode === "intermediate"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-700 text-gray-300"
               }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-pressed={typingMode === "intermediate"}
+              aria-label="Select Intermediate Words"
             >
               Intermediate Words
-            </button>
+            </motion.button>
           </div>
-          
+
           {/* Time Duration Options */}
           <div className="flex gap-4">
             {[15, 30, 45].map((time) => (
-              <button
+              <motion.button
                 key={time}
                 onClick={() => setSelectedTime(time)}
                 className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
-                  selectedTime === time ? "bg-green-500 text-white" : "bg-gray-700 text-gray-300"
+                  selectedTime === time
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-700 text-gray-300"
                 }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                aria-pressed={selectedTime === time}
+                aria-label={`Select ${time} seconds`}
               >
                 {time} seconds
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>
@@ -390,12 +502,17 @@ return (
               </span>
             ))}
           </motion.div>
-          <input
+          <motion.input
             type="text"
             value={input}
             onChange={handleInputChange}
             className="w-full max-w-2xl px-6 py-4 rounded-lg bg-gray-800 text-white text-xl focus:outline-none shadow-lg"
             placeholder="Start typing..."
+            autoFocus
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            aria-label="Typing Input"
           />
           <div className="mt-6 text-gray-400 text-xl">Time Left: {timeLeft}s</div>
         </>
@@ -411,74 +528,95 @@ return (
         >
           <h2 className="text-4xl font-bold mb-6">Results</h2>
           <p className="text-2xl">Characters Typed: {typedChars}</p>
-          <p className="text-2xl">Errors: {errors}</p>
-          <p className="text-2xl">Accuracy: {accuracy}%</p>
-          <p className="text-2xl">WPM: {wpm}</p>
-          <button
+          <p className="text-2xl">Errors: {errorCount}</p> {/* Updated to use errorCount */}
+          <p className="text-2xl">Accuracy: {displayAccuracy}%</p>
+          <p className="text-2xl">WPM: {displayWpm}</p>
+          {errorMessage && (
+            <p className="text-red-500 text-lg mt-4">{errorMessage}</p>
+          )}
+          <motion.button
             onClick={() => generateSentence(typingMode, selectedTime)}
-            className="px-8 py-4 mt-8 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-2xl"
+            className="px-8 py-4 mt-8 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-2xl shadow-lg"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Restart Test"
           >
             Restart Test
-          </button>
+          </motion.button>
         </motion.div>
       )}
 
-{/* Typing Keyboard */}
-<div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
-  <div className="flex flex-col gap-2">
-    {/* Top Row */}
-    <div className="flex justify-center gap-2">
-      {[..."qwertyuiop"].map((key) => (
+      {/* Loading Indicator */}
+      {loading && (
         <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          animate={pressedKey === key ? { backgroundColor: "#3b82f6", color: "#fff" } : {}}
-          transition={{ duration: 0.1 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
         >
-          {key}
+          <motion.div
+            className="bg-gray-800 p-6 rounded-lg shadow-lg text-white text-xl"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            Saving your results...
+          </motion.div>
         </motion.div>
-      ))}
-    </div>
-    {/* Middle Row */}
-    <div className="flex justify-center gap-2 ml-6">
-      {[..."asdfghjkl"].map((key) => (
-        <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          animate={pressedKey === key ? { backgroundColor: "#3b82f6", color: "#fff" } : {}}
-          transition={{ duration: 0.1 }}
-        >
-          {key}
-        </motion.div>
-      ))}
-    </div>
-    {/* Bottom Row */}
-    <div className="flex justify-center gap-2 ml-12">
-      {[..."zxcvbnm"].map((key) => (
-        <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          animate={pressedKey === key ? { backgroundColor: "#3b82f6", color: "#fff" } : {}}
-          transition={{ duration: 0.1 }}
-        >
-          {key}
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</div>
+      )}
 
+      {/* Typing Keyboard */}
+      <div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
+        <div className="flex flex-col gap-2">
+          {/* Top Row */}
+          <div className="flex justify-center gap-2">
+            {[..."qwertyuiop"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+          {/* Middle Row */}
+          <div className="flex justify-center gap-2 ml-6">
+            {[..."asdfghjkl"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+          {/* Bottom Row */}
+          <div className="flex justify-center gap-2 ml-12">
+            {[..."zxcvbnm"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
+
 };
 
 export default TypingTest;
