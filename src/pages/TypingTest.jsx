@@ -125,7 +125,8 @@ const TypingTest = () => {
   const [typingMode, setTypingMode] = useState("simple");
   const [isRunning, setIsRunning] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [errorCount, setErrorCount] = useState(0); // Renamed from errors
+  const [currentErrors, setCurrentErrors] = useState(0);
+  const [totalErrors, setTotalErrors] = useState(0);
   const [typedChars, setTypedChars] = useState(0);
   const [pressedKey, setPressedKey] = useState(null);
   const navigate = useNavigate();
@@ -133,6 +134,7 @@ const TypingTest = () => {
   const [selectedTheme, setSelectedTheme] = useState("default");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [previousInput, setPreviousInput] = useState("");
 
   // Calculate number of words based on time
   const getWordCount = (seconds) => {
@@ -140,7 +142,6 @@ const TypingTest = () => {
     return Math.ceil((seconds / 60) * wordsPerMinute);
   };
 
-  // Toggle Theme Modal
   const toggleThemeModal = () => {
     setIsThemeModalOpen((prev) => !prev);
   };
@@ -154,17 +155,21 @@ const TypingTest = () => {
     ).join(" ");
     setSentence(randomSentence);
     setInput("");
+    setPreviousInput("");
     setTypedChars(0);
-    setErrorCount(0); // Reset errorCount
+    setCurrentErrors(0);
+    setTotalErrors(0);
     setElapsedTime(0);
     setTimeLeft(time);
     setIsFinished(false);
     setIsRunning(false);
+    setErrorMessage("");
   };
 
-  // Initialize the sentence when typing mode or selected time changes
+  // Initialize the sentence
   useEffect(() => {
     generateSentence(typingMode, selectedTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typingMode, selectedTime]);
 
   // Handle timer countdown
@@ -176,101 +181,130 @@ const TypingTest = () => {
       }, 1000);
       return () => clearInterval(timer);
     } else if (isRunning && timeLeft === 0) {
-      finishTest(errorCount); // Pass errorCount to finishTest
+      finishTest();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
+
+  // Calculate errors for the current state of input
+  const calculateErrors = (currentInput) => {
+    let errors = 0;
+    const inputLength = Math.min(currentInput.length, sentence.length);
+    for (let i = 0; i < inputLength; i++) {
+      if (currentInput[i] !== sentence[i]) {
+        errors++;
+      }
+    }
+    return errors;
+  };
 
   // Handle user input changes
   const handleInputChange = (e) => {
-    const value = e.target.value;
-    if (!isRunning) setIsRunning(true);
-    setInput(value);
-    setTypedChars(value.length);
+    if (isFinished) return;
 
-    // Calculate errors
-    const currentErrors = calculateErrors(value);
-    setErrorCount(currentErrors);
+    let value = e.target.value;
 
-    // Debugging
-    console.log("Current Input:", value);
-    console.log("Current Errors:", currentErrors);
-
-    // Auto-finish if the sentence is completed
-    if (value === sentence) finishTest(currentErrors); // Pass currentErrors here
-  };
-
-  // Calculate the number of errors in the current input
-  const calculateErrors = (currentInput) => {
-    let errorCount = 0;
-    for (let i = 0; i < currentInput.length; i++) {
-      if (currentInput[i] !== sentence[i]) errorCount++;
+    // Limit input to sentence length
+    if (value.length > sentence.length) {
+      setErrorMessage("You've reached the end of the sentence.");
+      value = value.slice(0, sentence.length);
+    } else {
+      setErrorMessage("");
     }
-    return errorCount;
+
+    if (!isRunning) {
+      setIsRunning(true);
+    }
+
+    // Calculate new errors
+    const newErrors = calculateErrors(value);
+
+    // Check for additional errors by comparing with previous input
+    if (value.length > previousInput.length) {
+      const newChar = value[value.length - 1];
+      const expectedChar = sentence[value.length - 1];
+      if (newChar !== expectedChar) {
+        setTotalErrors((prev) => prev + 1);
+      }
+    }
+
+    setInput(value);
+    setPreviousInput(value);
+    setTypedChars(value.length);
+    setCurrentErrors(newErrors);
+
+    // Check for test completion
+    if (value === sentence) {
+      finishTest();
+    }
   };
 
   // Finish the test and save results
- // frontend/src/pages/TypingTest.jsx
-// ... other imports ...
+  const finishTest = async () => {
+    if (isFinished) return; // Prevent multiple calls
 
-const finishTest = async (currentErrors) => {
-  setIsRunning(false);
-  setIsFinished(true);
+    setIsRunning(false);
+    setIsFinished(true);
 
-  // Generate or retrieve user ID
-  let userId = localStorage.getItem("userId");
-  if (!userId) {
-    userId = crypto.randomUUID();
-    localStorage.setItem("userId", userId);
-  }
+    // Generate or retrieve user ID
+    let userId = localStorage.getItem("userId");
+    if (!userId) {
+      userId = crypto.randomUUID();
+      localStorage.setItem("userId", userId);
+    }
 
-  // Calculate WPM and Accuracy using currentErrors
-  const testAccuracy = typedChars > 0 ? (((typedChars - currentErrors) / typedChars) * 100).toFixed(2) : 0;
-  const testWpm = elapsedTime > 0
-    ? Math.floor((typedChars / 5) / (elapsedTime / 60))
-    : 0;
+    // Calculate WPM and Accuracy using totalErrors
+    const testAccuracy =
+      typedChars > 0
+        ? (((typedChars - totalErrors) / typedChars) * 100).toFixed(2)
+        : 0;
+    const testWpm =
+      elapsedTime > 0
+        ? Math.floor((typedChars / 5) / (elapsedTime / 60))
+        : 0;
 
-  // Prepare the test data
-  const newTest = {
-    userId,
-    wpm: testWpm,
-    accuracy: Number(testAccuracy),
-    errorCount: Number(currentErrors), // Ensure this is 'errorCount'
-    duration: Number(selectedTime),
+    // Prepare the test data
+    const newTest = {
+      userId,
+      wpm: Number(testWpm),
+      accuracy: Number(testAccuracy),
+      errorCount: Number(totalErrors), // Correct usage
+      duration: Number(selectedTime),
+    };
+
+    console.log("Finishing Test with Errors:", totalErrors);
+    console.log("Sending Test Data:", newTest); // Debugging
+
+    // Save the test results to the API
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const response = await fetch('/api/results', { // Ensure proxy is set or use full URL
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTest),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to save results.");
+      }
+
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.message || "Failed to save results.");
+      }
+
+      // Optionally, handle successful save (e.g., log to console)
+      console.log("Results saved successfully:", result.data);
+    } catch (error) {
+      console.error("Error saving results:", error);
+      setErrorMessage(error.message);
+    }
+    setLoading(false);
   };
-
-  console.log("Sending Test Data:", newTest); // Debugging
-
-  // Save the test results to the API
-  setLoading(true);
-  setErrorMessage("");
-  try {
-    const response = await fetch('/api/results', { // Ensure proxy is set or use full URL
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(newTest),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to save results.");
-    }
-
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || "Failed to save results.");
-    }
-
-    // Optionally, handle successful save (e.g., log to console)
-    console.log("Results saved successfully:", result.data);
-  } catch (error) {
-    console.error("Error saving results:", error);
-    setErrorMessage(error.message);
-  }
-  setLoading(false);
-};
-
 
   // Handle key presses for the on-screen keyboard UI
   const handleKeyDown = (e) => {
@@ -287,11 +321,14 @@ const finishTest = async (currentErrors) => {
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [typingMode, selectedTime, sentence, input]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingMode, selectedTime]);
 
-  // Calculate accuracy and WPM for display
+  // Calculate display metrics
   const displayAccuracy =
-    typedChars > 0 ? (((typedChars - errorCount) / typedChars) * 100).toFixed(2) : 0;
+    typedChars > 0
+      ? (((typedChars - totalErrors) / typedChars) * 100).toFixed(2)
+      : 0;
   const displayWpm =
     elapsedTime > 0
       ? ((typedChars / 5) / (elapsedTime / 60)).toFixed(0)
@@ -506,7 +543,10 @@ const finishTest = async (currentErrors) => {
             type="text"
             value={input}
             onChange={handleInputChange}
-            className="w-full max-w-2xl px-6 py-4 rounded-lg bg-gray-800 text-white text-xl focus:outline-none shadow-lg"
+            disabled={isFinished} // Disable input after test
+            className={`w-full max-w-2xl px-6 py-4 rounded-lg bg-gray-800 text-white text-xl focus:outline-none shadow-lg ${
+              isFinished ? "bg-gray-700 cursor-not-allowed" : ""
+            }`}
             placeholder="Start typing..."
             autoFocus
             initial={{ opacity: 0 }}
@@ -515,6 +555,9 @@ const finishTest = async (currentErrors) => {
             aria-label="Typing Input"
           />
           <div className="mt-6 text-gray-400 text-xl">Time Left: {timeLeft}s</div>
+          {errorMessage && (
+            <p className="text-red-500 text-lg mt-4">{errorMessage}</p>
+          )}
         </>
       )}
 
@@ -528,7 +571,7 @@ const finishTest = async (currentErrors) => {
         >
           <h2 className="text-4xl font-bold mb-6">Results</h2>
           <p className="text-2xl">Characters Typed: {typedChars}</p>
-          <p className="text-2xl">Errors: {errorCount}</p> {/* Updated to use errorCount */}
+          <p className="text-2xl">Errors: {totalErrors}</p> {/* Corrected Line */}
           <p className="text-2xl">Accuracy: {displayAccuracy}%</p>
           <p className="text-2xl">WPM: {displayWpm}</p>
           {errorMessage && (
@@ -616,7 +659,6 @@ const finishTest = async (currentErrors) => {
       </div>
     </div>
   );
-
 };
 
 export default TypingTest;
