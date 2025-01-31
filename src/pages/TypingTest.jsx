@@ -136,6 +136,10 @@ const TypingTest = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
 
+  // Retrieve the user's name and userId from localStorage
+  const userName = localStorage.getItem("userName");
+  const userId = localStorage.getItem("userId");
+
   // Define API_URL using environment variable
   const API_URL = process.env.REACT_APP_API_URL;
 
@@ -171,9 +175,14 @@ const TypingTest = () => {
 
   // Initialize the sentence
   useEffect(() => {
-    generateSentence(typingMode, selectedTime);
+    if (!userName || !userId) {
+      // If userName or userId is not set, navigate back to home
+      navigate("/");
+    } else {
+      generateSentence(typingMode, selectedTime);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typingMode, selectedTime]);
+  }, [typingMode, selectedTime, userName, userId]);
 
   // Handle timer countdown
   useEffect(() => {
@@ -261,13 +270,6 @@ const TypingTest = () => {
 
   // Finish the test and save results
   const finishTest = async (finalInput) => {
-    // Generate or retrieve user ID
-    let userId = localStorage.getItem("userId");
-    if (!userId) {
-      userId = crypto.randomUUID();
-      localStorage.setItem("userId", userId);
-    }
-
     // Double check completion conditions using finalInput
     if (isFinished || finalInput !== sentence) {
       console.log("Test not finished - conditions not met:", {
@@ -317,20 +319,17 @@ const TypingTest = () => {
         body: JSON.stringify(newTest),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to save results.");
+        // Handle errors from the backend
+        setErrorMessage(data.message || "Failed to save your results.");
+      } else {
+        console.log("Results saved successfully:", data.data);
       }
-
-      const result = await response.json();
-      if (!result.success) {
-        throw new Error(result.message || "Failed to save results.");
-      }
-
-      console.log("Results saved successfully:", result.data);
     } catch (error) {
       console.error("Error saving results:", error);
-      setErrorMessage(error.message);
+      setErrorMessage("An unexpected error occurred. Please try again.");
     }
 
     setLoading(false);
@@ -587,32 +586,32 @@ const TypingTest = () => {
           <div className="mt-2 sm:mt-4 text-sm sm:text-lg text-gray-400">
             Time Left: {timeLeft}s
           </div>
-<motion.div
-  className="mt-2 sm:mt-4 flex items-center text-sm sm:text-base text-gray-400 italic px-2"
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5 }}
->
-  {/* Info Icon */}
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className="h-5 w-5 mr-2 text-blue-400"
-    viewBox="0 0 20 20"
-    fill="currentColor"
-    aria-hidden="true"
-  >
-    <path
-      fillRule="evenodd"
-      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-1a1 1 0 10-2 0v4a1 1 0 102 0V9z"
-      clipRule="evenodd"
-    />
-  </svg>
-  
-  {/* Note Text */}
-  <span>
-    Press <kbd className="bg-gray-700 px-1 py-0.5 rounded">Tab</kbd> to restart the test and change words.
-  </span>
-</motion.div>
+          <motion.div
+            className="mt-2 sm:mt-4 flex items-center text-sm sm:text-base text-gray-400 italic px-2"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {/* Info Icon */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2 text-blue-400"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-1a1 1 0 10-2 0v4a1 1 0 102 0V9z"
+                clipRule="evenodd"
+              />
+            </svg>
+
+            {/* Note Text */}
+            <span>
+              Press <kbd className="bg-gray-700 px-1 py-0.5 rounded">Tab</kbd> to restart the test and change words.
+            </span>
+          </motion.div>
           {errorMessage && (
             <p className="text-red-500 text-sm sm:text-lg mt-2 sm:mt-4">
               {errorMessage}
@@ -633,6 +632,7 @@ const TypingTest = () => {
             Results
           </h2>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 justify-center">
+            <p className="text-base sm:text-xl">Name: {userName}</p>
             <p className="text-base sm:text-xl">Characters Typed: {typedChars}</p>
             <p className="text-base sm:text-xl">Errors: {totalErrors}</p>
             <p className="text-base sm:text-xl">Accuracy: {displayAccuracy}%</p>
@@ -645,7 +645,7 @@ const TypingTest = () => {
           )}
           <motion.button
             onClick={() => generateSentence(typingMode, selectedTime)}
-            className="mt-4 sm:mt-8 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-base sm:text-2xl shadow-lg"
+            className="mt-4 sm:mt-8 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-base sm:text-2xl shadow-lg transition-all"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Restart Test"
@@ -673,57 +673,56 @@ const TypingTest = () => {
         </motion.div>
       )}
 
-{/* Typing Keyboard */}
-<div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
-  <div className="flex flex-col gap-2">
-    {/* Top Row */}
-    <div className="flex justify-center gap-2">
-      {[..."qwertyuiop"].map((key) => (
-        <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {key}
-        </motion.div>
-      ))}
-    </div>
-    {/* Middle Row */}
-    <div className="flex justify-center gap-2 ml-6">
-      {[..."asdfghjkl"].map((key) => (
-        <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {key}
-        </motion.div>
-      ))}
-    </div>
-    {/* Bottom Row */}
-    <div className="flex justify-center gap-2 ml-12">
-      {[..."zxcvbnm"].map((key) => (
-        <motion.div
-          key={key}
-          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-            pressedKey === key ? themes[selectedTheme].keyPressed : ""
-          }`}
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.1 }}
-        >
-          {key}
-        </motion.div>
-      ))}
-    </div>
-  </div>
-</div>
-
+      {/* Typing Keyboard */}
+      <div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
+        <div className="flex flex-col gap-2">
+          {/* Top Row */}
+          <div className="flex justify-center gap-2">
+            {[..."qwertyuiop"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+          {/* Middle Row */}
+          <div className="flex justify-center gap-2 ml-6">
+            {[..."asdfghjkl"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+          {/* Bottom Row */}
+          <div className="flex justify-center gap-2 ml-12">
+            {[..."zxcvbnm"].map((key) => (
+              <motion.div
+                key={key}
+                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
+                }`}
+                whileHover={{ scale: 1.1 }}
+                transition={{ duration: 0.1 }}
+              >
+                {key}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

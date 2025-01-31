@@ -1,8 +1,9 @@
-// typingy/backend/index.js
+// backend/index.js
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const dbConnect = require('./lib/dbConnect');
+const User = require('./models/User');
 const Result = require('./models/Result');
 
 dotenv.config();
@@ -10,24 +11,27 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Parse Allowed Origins from Environment Variable
+// Define Allowed Origins from Environment Variable
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
   : ['http://localhost:3000']; // Fallback to localhost:3000 if not set
 
 // CORS Options
+// Update the corsOptions in your backend/index.js
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}.`;
-      return callback(new Error(msg), false);
+    // Allow requests with no origin (like local development)
+    if (!origin || 
+        origin === 'null' || 
+        allowedOrigins.indexOf(origin) !== -1
+    ) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}.`;
+    return callback(new Error(msg), false);
   },
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // Allow cookies to be sent
+  credentials: true,
   optionsSuccessStatus: 204,
 };
 
@@ -39,12 +43,46 @@ app.use(express.json());
 dbConnect();
 
 // API Routes
+
+// POST /api/users - Register a new user
+// In backend/index.js (POST /api/users)
+app.post('/api/users', async (req, res) => {
+  try {
+    const { userId, name } = req.body;
+    if (!userId || !name) {
+      return res.status(400).json({ success: false, message: 'Missing userId or name.' });
+    }
+
+    // Check if the name is already taken
+    const existingUser = await User.findOne({ name: name.trim() });
+    if (existingUser) {
+      return res.status(409).json({ success: false, message: 'This name is already taken. Please choose a different name.' });
+    }
+
+    // Create a new user document using the UUID as _id
+    const newUser = new User({
+      _id: userId,  // Use the provided UUID as the _id
+      name: name.trim(),
+    });
+
+    const savedUser = await newUser.save();
+    res.status(201).json({ success: true, data: savedUser });
+  } catch (error) {
+    console.error('Error in POST /api/users:', error.message);
+    if (error.code === 11000) { // Duplicate key error
+      const duplicateField = Object.keys(error.keyValue)[0];
+      res.status(409).json({ success: false, message: `Duplicate field: ${duplicateField}. Please choose a different value.` });
+    } else {
+      res.status(500).json({ success: false, message: 'Server Error' });
+    }
+  }
+});
+
+
+// POST /api/results - Submit a new test result
 app.post('/api/results', async (req, res) => {
   try {
     const { userId, wpm, accuracy, errorCount, duration } = req.body;
-
-    // Debugging: Log received data
-    console.log("Received Test Data:", req.body);
 
     // Basic validation
     if (
@@ -57,11 +95,20 @@ app.post('/api/results', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid input data.' });
     }
 
+    // Check if the user exists using the _id field (your custom UUID)
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Create a new result
     const newResult = new Result({
       userId,
       wpm,
+      // Optionally, if you want to store the user's name with the result, you can include it:
+      // name: user.name,
       accuracy,
-      errorCount, // Use errorCount as per schema
+      errorCount,
       duration,
     });
 
@@ -74,6 +121,8 @@ app.post('/api/results', async (req, res) => {
   }
 });
 
+
+// GET /api/results - Fetch user-specific results
 app.get('/api/results', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -82,11 +131,27 @@ app.get('/api/results', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing userId.' });
     }
 
-    const results = await Result.find({ userId });
+    const results = await Result.find({ userId }).populate("userId", "name");
+
 
     res.status(200).json({ success: true, data: results });
   } catch (error) {
     console.error('Error in GET /api/results:', error.message);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+});
+
+// GET /api/leaderboard - Fetch top 10 results
+app.get('/api/leaderboard', async (req, res) => {
+  try {
+    const topResults = await Result.find({})
+    .sort({ wpm: -1, accuracy: -1 })
+    .limit(10)
+    .populate("userId", "name wpm accuracy"); // Get user name
+  
+    res.status(200).json({ success: true, data: topResults });
+  } catch (error) {
+    console.error('Error in GET /api/leaderboard:', error.message);
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 });

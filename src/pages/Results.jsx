@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 const Results = () => {
   const [data, setData] = useState({ tests: [] });
   const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState([]);
 
   // Define API_URL using environment variable
   const API_URL = process.env.REACT_APP_API_URL;
@@ -30,8 +31,25 @@ const Results = () => {
       }
       setLoading(false);
     };
+
+    const fetchLeaderboard = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/leaderboard`);
+        const result = await response.json();
+        if (result.success) {
+          setLeaderboard(result.data);
+          console.log("Fetched Leaderboard:", result.data);
+        } else {
+          console.error("Failed to fetch leaderboard:", result.message);
+        }
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error);
+      }
+    };
+
     fetchResults();
-  }, [API_URL]); // Added API_URL as dependency
+    fetchLeaderboard();
+  }, [API_URL]);
 
   // Compute Statistics
   const totalTests = data.tests.length;
@@ -71,8 +89,13 @@ const Results = () => {
     );
   }
 
+  // Retrieve the latest test result to display the name
+  const latestTest = data.tests[data.tests.length - 1];
+  const userName = latestTest?.userId?.name || "N/A";
+
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-start p-4">
       {/* Title */}
       <motion.h1
         className="text-2xl sm:text-4xl font-extrabold mb-4 sm:mb-6"
@@ -83,7 +106,7 @@ const Results = () => {
         Your Typing Results
       </motion.h1>
 
-      {/* Statistics Section */}
+      {/* User Statistics */}
       <motion.div
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-sm sm:max-w-2xl w-full px-2"
         initial="hidden"
@@ -93,7 +116,7 @@ const Results = () => {
           visible: { opacity: 1, y: 0, transition: { staggerChildren: 0.2 } },
         }}
       >
-        {/* Total Tests */}
+        {/* Name */}
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
@@ -103,6 +126,21 @@ const Results = () => {
           }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-blue-500">
+            Name
+          </h2>
+          <p className="text-base sm:text-xl">{userName}</p>
+        </motion.div>
+
+        {/* Total Tests */}
+        <motion.div
+          className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
+          whileHover={{ scale: 1.05 }}
+          variants={{
+            hidden: { opacity: 0, y: 10 },
+            visible: { opacity: 1, y: 0 },
+          }}
+        >
+          <h2 className="text-lg sm:text-2xl font-bold mb-2 text-green-500">
             Total Tests
           </h2>
           <p className="text-base sm:text-xl">{totalTests}</p>
@@ -188,6 +226,45 @@ const Results = () => {
           </h2>
           <p className="text-base sm:text-xl">{totalErrors}</p>
         </motion.div>
+      </motion.div>
+
+      {/* Leaderboard Section */}
+      <motion.div
+        className="mt-8 sm:mt-12 w-full max-w-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1 }}
+      >
+        <h2 className="text-xl sm:text-3xl font-bold mb-4 text-blue-500">
+          Leaderboard - Top 10 WPM
+        </h2>
+        <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
+          {leaderboard.length > 0 ? (
+            <table className="w-full text-left">
+              <thead>
+                <tr>
+                  <th className="px-4 py-2">Rank</th>
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">WPM</th>
+                  <th className="px-4 py-2">Accuracy</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((entry, index) => (
+                  <tr key={index} className="hover:bg-gray-700">
+                    <td className="border-t border-gray-700 px-4 py-2">{index + 1}</td>
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.userId?.name || "Unknown"}</td>
+
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.wpm}</td>
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.accuracy}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-center">No leaderboard data available.</p>
+          )}
+        </div>
       </motion.div>
 
       {/* Back Button */}
