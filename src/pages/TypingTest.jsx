@@ -366,11 +366,11 @@ const TypingTest = () => {
 
   return (
     <div
-      className={`min-h-screen ${themes[selectedTheme].background} ${themes[selectedTheme].text} flex flex-col items-center justify-center p-6 relative`}
+      className={`min-h-screen ${themes[selectedTheme].background} ${themes[selectedTheme].text} flex flex-col items-center justify-center p-4 relative`}
     >
       {/* Title */}
       <motion.h1
-        className="text-5xl font-extrabold mb-8"
+        className="text-3xl sm:text-5xl font-extrabold mb-4 tracking-wide"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
@@ -379,30 +379,30 @@ const TypingTest = () => {
       </motion.h1>
 
       {/* Navigation Buttons */}
-      <div className="absolute top-6 right-6 flex gap-4">
+      <div className="absolute top-4 right-4 flex flex-col sm:flex-row gap-2">
         <motion.button
           onClick={() => navigate("/")}
-          className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-lg font-semibold shadow-lg"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm sm:text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           aria-label="Go to Home"
         >
           Home
         </motion.button>
         <motion.button
           onClick={toggleThemeModal}
-          className="px-6 py-3 bg-gray-500 hover:bg-gray-600 rounded-lg text-lg font-semibold shadow-lg"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-500 hover:bg-gray-600 rounded-lg text-sm sm:text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           aria-label="Select Theme"
         >
           Themes
         </motion.button>
         <motion.button
           onClick={() => navigate("/results")}
-          className="px-6 py-3 bg-green-500 hover:bg-green-600 rounded-lg text-lg font-semibold shadow-lg"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          className="px-4 py-2 sm:px-6 sm:py-3 bg-green-500 hover:bg-green-600 rounded-lg text-sm sm:text-lg font-semibold shadow-lg"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           aria-label="View Results"
         >
           Results
@@ -413,26 +413,26 @@ const TypingTest = () => {
       <AnimatePresence>
         {isThemeModalOpen && (
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-gray-800 rounded-lg shadow-xl p-6 max-w-lg w-full relative"
+              className="bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 max-w-lg w-full relative"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h2 className="text-2xl font-bold mb-4 text-orange-300">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 text-orange-300">
                 Choose a Theme
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                 {Object.keys(themes).map((theme) => (
                   <motion.div
                     key={theme}
-                    className={`cursor-pointer p-4 rounded-lg border-4 ${
+                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${
                       selectedTheme === theme
                         ? "border-blue-500"
                         : "border-transparent"
@@ -445,7 +445,7 @@ const TypingTest = () => {
                     whileTap={{ scale: 0.95 }}
                   >
                     <div
-                      className={`h-full flex items-center justify-center text-sm text-center ${
+                      className={`h-full flex items-center justify-center text-xs sm:text-sm text-center ${
                         themes[theme].text
                       }`}
                     >
@@ -456,7 +456,7 @@ const TypingTest = () => {
               </div>
               <motion.button
                 onClick={toggleThemeModal}
-                className="mt-6 px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md mx-auto block"
+                className="mt-3 sm:mt-6 px-4 py-2 sm:px-6 sm:py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-md w-full sm:w-auto"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 aria-label="Close Theme Selector"
@@ -471,16 +471,16 @@ const TypingTest = () => {
       {/* Test Configuration Options */}
       {!isRunning && !isFinished && (
         <motion.div
-          className="mb-6 flex flex-col gap-4 items-center"
+          className="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4 items-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
           {/* Word Difficulty Options */}
-          <div className="flex gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <motion.button
               onClick={() => setTypingMode("simple")}
-              className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
                 typingMode === "simple"
                   ? "bg-blue-500 text-white"
                   : "bg-gray-700 text-gray-300"
@@ -494,7 +494,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("intermediate")}
-              className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
                 typingMode === "intermediate"
                   ? "bg-blue-500 text-white"
                   : "bg-gray-700 text-gray-300"
@@ -509,12 +509,12 @@ const TypingTest = () => {
           </div>
 
           {/* Time Duration Options */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             {[15, 30, 45].map((time) => (
               <motion.button
                 key={time}
                 onClick={() => setSelectedTime(time)}
-                className={`px-6 py-3 rounded font-semibold text-lg transition-all ${
+                className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
                   selectedTime === time
                     ? "bg-green-500 text-white"
                     : "bg-gray-700 text-gray-300"
@@ -534,14 +534,14 @@ const TypingTest = () => {
       {/* Timer Progress Bar */}
       {isRunning && (
         <motion.div
-          className="w-full max-w-3xl bg-gray-700 rounded-full h-3 mb-6"
+          className="w-full max-w-2xl bg-gray-700 rounded-full h-2 mb-4 sm:mb-6"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           style={{ originX: 0 }}
           transition={{ duration: selectedTime, ease: "linear" }}
         >
           <div
-            className="bg-blue-500 h-3 rounded-full"
+            className="bg-blue-500 h-2 rounded-full"
             style={{ width: `${(timeLeft / selectedTime) * 100}%` }}
           ></div>
         </motion.div>
@@ -551,7 +551,7 @@ const TypingTest = () => {
       {!isFinished && (
         <>
           <motion.div
-            className="mb-8 text-3xl font-bold tracking-wide leading-relaxed max-w-4xl text-center"
+            className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold tracking-wide leading-relaxed max-w-md sm:max-w-3xl text-center px-2"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
@@ -576,9 +576,7 @@ const TypingTest = () => {
             value={input}
             onChange={handleInputChange}
             disabled={isFinished} // Disable input after test
-            className={`w-full max-w-2xl px-6 py-4 rounded-lg bg-gray-800 text-white text-xl focus:outline-none shadow-lg ${
-              isFinished ? "bg-gray-700 cursor-not-allowed" : ""
-            }`}
+            className={`w-full max-w-md sm:max-w-2xl px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-gray-800 text-white text-base sm:text-xl focus:outline-none shadow-lg`}
             placeholder="Start typing..."
             autoFocus
             initial={{ opacity: 0 }}
@@ -586,9 +584,39 @@ const TypingTest = () => {
             transition={{ duration: 1 }}
             aria-label="Typing Input"
           />
-          <div className="mt-6 text-gray-400 text-xl">Time Left: {timeLeft}s</div>
+          <div className="mt-2 sm:mt-4 text-sm sm:text-lg text-gray-400">
+            Time Left: {timeLeft}s
+          </div>
+<motion.div
+  className="mt-2 sm:mt-4 flex items-center text-sm sm:text-base text-gray-400 italic px-2"
+  initial={{ opacity: 0, y: 10 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+>
+  {/* Info Icon */}
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-5 w-5 mr-2 text-blue-400"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      fillRule="evenodd"
+      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-1a1 1 0 10-2 0v4a1 1 0 102 0V9z"
+      clipRule="evenodd"
+    />
+  </svg>
+  
+  {/* Note Text */}
+  <span>
+    Press <kbd className="bg-gray-700 px-1 py-0.5 rounded">Tab</kbd> to restart the test and change words.
+  </span>
+</motion.div>
           {errorMessage && (
-            <p className="text-red-500 text-lg mt-4">{errorMessage}</p>
+            <p className="text-red-500 text-sm sm:text-lg mt-2 sm:mt-4">
+              {errorMessage}
+            </p>
           )}
         </>
       )}
@@ -596,23 +624,29 @@ const TypingTest = () => {
       {/* Results */}
       {isFinished && (
         <motion.div
-          className="text-center"
+          className="text-center px-4 sm:px-6"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-4xl font-bold mb-6">Results</h2>
-          <p className="text-2xl">Characters Typed: {typedChars}</p>
-          <p className="text-2xl">Errors: {totalErrors}</p>
-          <p className="text-2xl">Accuracy: {displayAccuracy}%</p>
-          <p className="text-2xl">WPM: {displayWpm}</p>
+          <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">
+            Results
+          </h2>
+          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 justify-center">
+            <p className="text-base sm:text-xl">Characters Typed: {typedChars}</p>
+            <p className="text-base sm:text-xl">Errors: {totalErrors}</p>
+            <p className="text-base sm:text-xl">Accuracy: {displayAccuracy}%</p>
+            <p className="text-base sm:text-xl">WPM: {displayWpm}</p>
+          </div>
           {errorMessage && (
-            <p className="text-red-500 text-lg mt-4">{errorMessage}</p>
+            <p className="text-red-500 text-sm sm:text-lg mt-2 sm:mt-4">
+              {errorMessage}
+            </p>
           )}
           <motion.button
             onClick={() => generateSentence(typingMode, selectedTime)}
-            className="px-8 py-4 mt-8 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-2xl shadow-lg"
-            whileHover={{ scale: 1.1 }}
+            className="mt-4 sm:mt-8 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 hover:bg-green-600 rounded-lg font-semibold text-base sm:text-2xl shadow-lg"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Restart Test"
           >
@@ -624,12 +658,12 @@ const TypingTest = () => {
       {/* Loading Indicator */}
       {loading && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
           <motion.div
-            className="bg-gray-800 p-6 rounded-lg shadow-lg text-white text-xl"
+            className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg text-white text-base sm:text-xl max-w-sm w-full"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
@@ -639,56 +673,57 @@ const TypingTest = () => {
         </motion.div>
       )}
 
-      {/* Typing Keyboard */}
-      <div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
-        <div className="flex flex-col gap-2">
-          {/* Top Row */}
-          <div className="flex justify-center gap-2">
-            {[..."qwertyuiop"].map((key) => (
-              <motion.div
-                key={key}
-                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
-                }`}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.1 }}
-              >
-                {key}
-              </motion.div>
-            ))}
-          </div>
-          {/* Middle Row */}
-          <div className="flex justify-center gap-2 ml-6">
-            {[..."asdfghjkl"].map((key) => (
-              <motion.div
-                key={key}
-                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
-                }`}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.1 }}
-              >
-                {key}
-              </motion.div>
-            ))}
-          </div>
-          {/* Bottom Row */}
-          <div className="flex justify-center gap-2 ml-12">
-            {[..."zxcvbnm"].map((key) => (
-              <motion.div
-                key={key}
-                className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
-                  pressedKey === key ? themes[selectedTheme].keyPressed : ""
-                }`}
-                whileHover={{ scale: 1.1 }}
-                transition={{ duration: 0.1 }}
-              >
-                {key}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
+{/* Typing Keyboard */}
+<div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
+  <div className="flex flex-col gap-2">
+    {/* Top Row */}
+    <div className="flex justify-center gap-2">
+      {[..."qwertyuiop"].map((key) => (
+        <motion.div
+          key={key}
+          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+            pressedKey === key ? themes[selectedTheme].keyPressed : ""
+          }`}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.1 }}
+        >
+          {key}
+        </motion.div>
+      ))}
+    </div>
+    {/* Middle Row */}
+    <div className="flex justify-center gap-2 ml-6">
+      {[..."asdfghjkl"].map((key) => (
+        <motion.div
+          key={key}
+          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+            pressedKey === key ? themes[selectedTheme].keyPressed : ""
+          }`}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.1 }}
+        >
+          {key}
+        </motion.div>
+      ))}
+    </div>
+    {/* Bottom Row */}
+    <div className="flex justify-center gap-2 ml-12">
+      {[..."zxcvbnm"].map((key) => (
+        <motion.div
+          key={key}
+          className={`w-12 h-12 flex justify-center items-center rounded-lg ${themes[selectedTheme].keyboard} text-2xl font-bold shadow-md ${
+            pressedKey === key ? themes[selectedTheme].keyPressed : ""
+          }`}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.1 }}
+        >
+          {key}
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</div>
+
     </div>
   );
 };

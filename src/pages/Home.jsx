@@ -1,3 +1,4 @@
+// typingy/src/pages/Home.jsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -11,9 +12,9 @@ const Home = () => {
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
       <div
-        className={`h-screen flex flex-col items-center justify-center relative overflow-hidden ${
+        className={`min-h-screen flex flex-col items-center justify-center relative overflow-hidden ${
           darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-900"
-        }`}
+        } p-4`}
       >
         {/* Animated Gradient Background */}
         <motion.div
@@ -29,7 +30,7 @@ const Home = () => {
         {/* Theme Toggle Button */}
         <motion.button
           onClick={() => setDarkMode(!darkMode)}
-          className={`absolute top-6 right-6 p-3 rounded-full shadow-lg transition-all z-10 ${
+          className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all z-10 ${
             darkMode
               ? "bg-gray-800 hover:bg-gray-700 text-gray-200"
               : "bg-gray-200 hover:bg-gray-300 text-gray-800"
@@ -52,7 +53,7 @@ const Home = () => {
           <motion.img
             src={typingyLogo}
             alt="TypingY Logo"
-            className={`w-32 h-32 mb-6 rounded-full p-2 ${
+            className={`w-24 h-24 mb-4 rounded-full p-2 ${
               darkMode
                 ? "bg-transparent"
                 : "bg-black border-4 border-white shadow-xl" // Changed bg and border color in light mode
@@ -69,12 +70,13 @@ const Home = () => {
           />
 
           {/* Title */}
-          <h1 className="text-5xl font-extrabold mb-4 tracking-wide">
-            Welcome to <span className="text-blue-500 dark:text-blue-400">TypingY</span>
+          <h1 className="text-3xl sm:text-5xl font-extrabold mb-2 tracking-wide">
+            Welcome to{" "}
+            <span className="text-blue-500 dark:text-blue-400">TypingY</span>
           </h1>
 
           {/* Tagline */}
-          <p className="text-xl mb-12 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl mb-8 max-w-xl mx-auto px-2">
             Test your typing speed, improve your skills, and challenge yourself with a fun typing experience.
           </p>
 
@@ -87,7 +89,7 @@ const Home = () => {
             >
               <Link
                 to="/test"
-                className={`px-8 py-4 rounded-lg text-xl font-semibold shadow-lg transition-all duration-300 ${
+                className={`px-6 py-3 rounded-lg text-lg sm:text-xl font-semibold shadow-lg transition-all duration-300 ${
                   darkMode
                     ? "bg-blue-600 hover:bg-blue-500 text-white"
                     : "bg-blue-500 hover:bg-blue-600 text-white"
@@ -103,7 +105,7 @@ const Home = () => {
             >
               <Link
                 to="/results"
-                className={`px-8 py-4 rounded-lg text-xl font-semibold shadow-lg transition-all duration-300 ${
+                className={`px-6 py-3 rounded-lg text-lg sm:text-xl font-semibold shadow-lg transition-all duration-300 ${
                   darkMode
                     ? "bg-green-600 hover:bg-green-500 text-white"
                     : "bg-green-500 hover:bg-green-600 text-white"
@@ -117,12 +119,12 @@ const Home = () => {
 
         {/* Footer */}
         <motion.footer
-          className="absolute bottom-4 left-0 right-0 text-center z-10"
+          className="absolute bottom-4 left-0 right-0 text-center z-10 px-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2 }}
         >
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-col sm:flex-row">
             <span
               className={`${
                 darkMode ? "text-gray-500" : "text-gray-400"
