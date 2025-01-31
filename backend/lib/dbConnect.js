@@ -1,26 +1,17 @@
 // backend/lib/dbConnect.js
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 
-dotenv.config();
-
-const connection = {};
-
-async function dbConnect() {
-  if (connection.isConnected) return;
-
+const dbConnect = async () => {
   try {
-    const db = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000
+    await mongoose.connect(process.env.MONGODB_URI, {
+      // Removed useNewUrlParser and useUnifiedTopology as they are deprecated in MongoDB Driver v4+
+      // These options are now always true by default
     });
-    connection.isConnected = db.connections[0].readyState;
-    console.log("MongoDB connected successfully");
+    console.log('MongoDB connected successfully.');
   } catch (error) {
-    console.error("MongoDB connection error:", error);
-    throw new Error("Database connection failed");
+    console.error('MongoDB connection error:', error.message);
+    process.exit(1); // Exit process with failure
   }
-}
+};
 
 module.exports = dbConnect;

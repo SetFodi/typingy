@@ -1,4 +1,4 @@
-// frontend/src/pages/TypingTest.jsx
+// typingy/src/pages/TypingTest.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { simpleWords, intermediateWords } from "../wordLists";
@@ -136,6 +136,9 @@ const TypingTest = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
 
+  // Define API_URL using environment variable
+  const API_URL = process.env.REACT_APP_API_URL;
+
   // Calculate number of words based on time
   const getWordCount = (seconds) => {
     const wordsPerMinute = 48; // Base rate of 48 words per minute
@@ -200,14 +203,25 @@ const TypingTest = () => {
 
   // Handle user input changes
   const handleInputChange = (e) => {
-    if (isFinished) return;
+    if (isFinished) {
+      console.log("Test already finished");
+      return;
+    }
 
-    let value = e.target.value;
+    const value = e.target.value;
+
+    // Debug logs
+    console.log("Current input:", value);
+    console.log("Expected sentence:", sentence);
+    console.log("Input length:", value.length);
+    console.log("Sentence length:", sentence.length);
+    console.log("Are they equal?", value === sentence);
 
     // Limit input to sentence length
+    let limitedValue = value;
     if (value.length > sentence.length) {
       setErrorMessage("You've reached the end of the sentence.");
-      value = value.slice(0, sentence.length);
+      limitedValue = value.slice(0, sentence.length);
     } else {
       setErrorMessage("");
     }
@@ -217,41 +231,56 @@ const TypingTest = () => {
     }
 
     // Calculate new errors
-    const newErrors = calculateErrors(value);
+    const newErrors = calculateErrors(limitedValue);
 
     // Check for additional errors by comparing with previous input
-    if (value.length > previousInput.length) {
-      const newChar = value[value.length - 1];
-      const expectedChar = sentence[value.length - 1];
+    if (limitedValue.length > previousInput.length) {
+      const newChar = limitedValue[limitedValue.length - 1];
+      const expectedChar = sentence[limitedValue.length - 1];
       if (newChar !== expectedChar) {
         setTotalErrors((prev) => prev + 1);
       }
     }
 
-    setInput(value);
-    setPreviousInput(value);
-    setTypedChars(value.length);
+    setInput(limitedValue);
+    setPreviousInput(limitedValue);
+    setTypedChars(limitedValue.length);
     setCurrentErrors(newErrors);
 
     // Check for test completion
-    if (value === sentence) {
-      finishTest();
+    if (limitedValue.length === sentence.length && limitedValue === sentence) {
+      console.log("Test completion conditions met, finishing test...");
+      finishTest(limitedValue);
+    } else if (limitedValue.length === sentence.length) {
+      console.log(
+        "Lengths match but content differs. Current errors:",
+        newErrors
+      );
     }
   };
 
   // Finish the test and save results
-  const finishTest = async () => {
-    if (isFinished) return; // Prevent multiple calls
-
-    setIsRunning(false);
-    setIsFinished(true);
-
+  const finishTest = async (finalInput) => {
     // Generate or retrieve user ID
     let userId = localStorage.getItem("userId");
     if (!userId) {
       userId = crypto.randomUUID();
       localStorage.setItem("userId", userId);
     }
+
+    // Double check completion conditions using finalInput
+    if (isFinished || finalInput !== sentence) {
+      console.log("Test not finished - conditions not met:", {
+        isFinished,
+        inputMatchesSentence: finalInput === sentence,
+        input: finalInput,
+        sentence,
+      });
+      return;
+    }
+
+    setIsRunning(false);
+    setIsFinished(true);
 
     // Calculate WPM and Accuracy using totalErrors
     const testAccuracy =
@@ -268,21 +297,22 @@ const TypingTest = () => {
       userId,
       wpm: Number(testWpm),
       accuracy: Number(testAccuracy),
-      errorCount: Number(totalErrors), // Correct usage
+      errorCount: Number(totalErrors),
       duration: Number(selectedTime),
     };
 
     console.log("Finishing Test with Errors:", totalErrors);
-    console.log("Sending Test Data:", newTest); // Debugging
+    console.log("Sending Test Data:", newTest);
 
     // Save the test results to the API
     setLoading(true);
     setErrorMessage("");
+
     try {
-      const response = await fetch('/api/results', { // Ensure proxy is set or use full URL
-        method: 'POST',
+      const response = await fetch(`${API_URL}/api/results`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(newTest),
       });
@@ -297,12 +327,12 @@ const TypingTest = () => {
         throw new Error(result.message || "Failed to save results.");
       }
 
-      // Optionally, handle successful save (e.g., log to console)
       console.log("Results saved successfully:", result.data);
     } catch (error) {
       console.error("Error saving results:", error);
       setErrorMessage(error.message);
     }
+
     setLoading(false);
   };
 
@@ -403,7 +433,9 @@ const TypingTest = () => {
                   <motion.div
                     key={theme}
                     className={`cursor-pointer p-4 rounded-lg border-4 ${
-                      selectedTheme === theme ? "border-blue-500" : "border-transparent"
+                      selectedTheme === theme
+                        ? "border-blue-500"
+                        : "border-transparent"
                     }`}
                     onClick={() => setSelectedTheme(theme)}
                     style={{
@@ -571,7 +603,7 @@ const TypingTest = () => {
         >
           <h2 className="text-4xl font-bold mb-6">Results</h2>
           <p className="text-2xl">Characters Typed: {typedChars}</p>
-          <p className="text-2xl">Errors: {totalErrors}</p> {/* Corrected Line */}
+          <p className="text-2xl">Errors: {totalErrors}</p>
           <p className="text-2xl">Accuracy: {displayAccuracy}%</p>
           <p className="text-2xl">WPM: {displayWpm}</p>
           {errorMessage && (

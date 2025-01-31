@@ -1,4 +1,4 @@
-// frontend/src/pages/Results.jsx
+// typingy/src/pages/Results.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -6,12 +6,15 @@ const Results = () => {
   const [data, setData] = useState({ tests: [] });
   const [loading, setLoading] = useState(true);
 
+  // Define API_URL using environment variable
+  const API_URL = process.env.REACT_APP_API_URL;
+
   useEffect(() => {
     const fetchResults = async () => {
       const userId = localStorage.getItem("userId");
       if (userId) {
         try {
-          const response = await fetch(`/api/results?userId=${userId}`);
+          const response = await fetch(`${API_URL}/api/results?userId=${userId}`); // Corrected API endpoint
           const result = await response.json();
           if (result.success) {
             setData({ tests: result.data });
@@ -28,20 +31,24 @@ const Results = () => {
       setLoading(false);
     };
     fetchResults();
-  }, []);
+  }, [API_URL]); // Added API_URL as dependency
 
   // Compute Statistics
   const totalTests = data.tests.length;
 
   const avgWPM =
     totalTests > 0
-      ? (data.tests.reduce((sum, test) => sum + parseInt(test.wpm, 10), 0) / totalTests).toFixed(2)
+      ? (
+          data.tests.reduce((sum, test) => sum + parseInt(test.wpm, 10), 0) /
+          totalTests
+        ).toFixed(2)
       : 0;
 
   const avgAccuracy =
     totalTests > 0
       ? (
-          data.tests.reduce((sum, test) => sum + parseFloat(test.accuracy), 0) / totalTests
+          data.tests.reduce((sum, test) => sum + parseFloat(test.accuracy), 0) /
+          totalTests
         ).toFixed(2)
       : 0;
 
