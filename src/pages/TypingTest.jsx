@@ -1,7 +1,7 @@
 // typingy/src/pages/TypingTest.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { simpleWords, intermediateWords } from "../wordLists";
+import { simpleWords, intermediateWords, sentences, quotes } from "../wordLists";
 import { motion, AnimatePresence } from "framer-motion";
 
 const themes = {
@@ -84,8 +84,8 @@ const themes = {
     keyPressed: "bg-purple-500 text-black shadow-purple-500",
   },
   solarizedOsaka: {
-    background: "bg-[#000a14]", // HSL(192, 100, 5)
-    text: "text-[#d8dee9]", // HSL(186, 8, 55)
+    background: "bg-[#000a14]",
+    text: "text-[#d8dee9]",
     keyboard: "bg-[#001e28] text-[#5a6a73]",
     keyPressed: "bg-[#5e81ac] text-[#000000] shadow-[#5e81ac]",
   },
@@ -135,6 +135,8 @@ const TypingTest = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
+  // New state to store the author when in quotes mode
+  const [quoteAuthor, setQuoteAuthor] = useState("");
 
   // Retrieve the user's name and userId from localStorage
   const userName = localStorage.getItem("userName");
@@ -153,14 +155,9 @@ const TypingTest = () => {
     setIsThemeModalOpen((prev) => !prev);
   };
 
-  // Generate a random sentence
+  // Generate a random sentence/quote based on the selected mode.
   const generateSentence = (mode = typingMode, time = selectedTime) => {
-    const wordPool = mode === "simple" ? simpleWords : intermediateWords;
-    const wordCount = getWordCount(time);
-    const randomSentence = Array.from({ length: wordCount }, () =>
-      wordPool[Math.floor(Math.random() * wordPool.length)]
-    ).join(" ");
-    setSentence(randomSentence);
+    // Reset common state
     setInput("");
     setPreviousInput("");
     setTypedChars(0);
@@ -171,6 +168,28 @@ const TypingTest = () => {
     setIsFinished(false);
     setIsRunning(false);
     setErrorMessage("");
+    setQuoteAuthor(""); // reset stored quote author
+
+    if (mode === "quotes") {
+      // Pick a random quote object
+      const randomQuoteObj = quotes[Math.floor(Math.random() * quotes.length)];
+      // Set the sentence to only the quote text
+      setSentence(randomQuoteObj.text);
+      // Store the author separately (to display as a note after finishing, if desired)
+      setQuoteAuthor(randomQuoteObj.author);
+    } else if (mode === "sentence") {
+      // Pick a random full sentence from the sentences array
+      const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
+      setSentence(randomSentence);
+    } else {
+      // For "simple" and "intermediate" modes, generate a sentence from words
+      const wordPool = mode === "simple" ? simpleWords : intermediateWords;
+      const wordCount = getWordCount(time);
+      const randomSentence = Array.from({ length: wordCount }, () =>
+        wordPool[Math.floor(Math.random() * wordPool.length)]
+      ).join(" ");
+      setSentence(randomSentence);
+    }
   };
 
   // Initialize the sentence
@@ -475,7 +494,7 @@ const TypingTest = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          {/* Word Difficulty Options */}
+          {/* Word / Sentence / Quote Mode Options */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <motion.button
               onClick={() => setTypingMode("simple")}
@@ -504,6 +523,34 @@ const TypingTest = () => {
               aria-label="Select Intermediate Words"
             >
               Intermediate Words
+            </motion.button>
+            <motion.button
+              onClick={() => setTypingMode("sentence")}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "sentence"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-700 text-gray-300"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-pressed={typingMode === "sentence"}
+              aria-label="Select Sentences"
+            >
+              Sentences
+            </motion.button>
+            <motion.button
+              onClick={() => setTypingMode("quotes")}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "quotes"
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-700 text-gray-300"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              aria-pressed={typingMode === "quotes"}
+              aria-label="Select Quotes"
+            >
+              Quotes
             </motion.button>
           </div>
 
@@ -637,6 +684,11 @@ const TypingTest = () => {
             <p className="text-base sm:text-xl">Errors: {totalErrors}</p>
             <p className="text-base sm:text-xl">Accuracy: {displayAccuracy}%</p>
             <p className="text-base sm:text-xl">WPM: {displayWpm}</p>
+            {typingMode === "quotes" && (
+              <p className="text-sm sm:text-base italic mt-2">
+                Quote by: {quoteAuthor}
+              </p>
+            )}
           </div>
           {errorMessage && (
             <p className="text-red-500 text-sm sm:text-lg mt-2 sm:mt-4">
