@@ -44,8 +44,7 @@ dbConnect();
 
 // API Routes
 
-// POST /api/users - Register a new user
-// In backend/index.js (POST /api/users)
+// POST /api/users - Register or Log In a user
 app.post('/api/users', async (req, res) => {
   try {
     const { userId, name } = req.body;
@@ -53,13 +52,14 @@ app.post('/api/users', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing userId or name.' });
     }
 
-    // Check if the name is already taken
-    const existingUser = await User.findOne({ name: name.trim() });
-    if (existingUser) {
-      return res.status(409).json({ success: false, message: 'This name is already taken. Please choose a different name.' });
+    // Check if a user with that name exists
+    let user = await User.findOne({ name: name.trim() });
+    if (user) {
+      // If the user exists, simply return it (login flow)
+      return res.status(200).json({ success: true, data: user });
     }
 
-    // Create a new user document using the UUID as _id
+    // Otherwise, create a new user using the provided UUID as _id
     const newUser = new User({
       _id: userId,  // Use the provided UUID as the _id
       name: name.trim(),
@@ -77,7 +77,6 @@ app.post('/api/users', async (req, res) => {
     }
   }
 });
-
 
 // POST /api/results - Submit a new test result
 app.post('/api/results', async (req, res) => {
