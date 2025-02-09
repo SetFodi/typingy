@@ -9,7 +9,16 @@ export const simpleWords = [
   "desk", "laptop", "box", "balloon", "hat", "glove", "bed", "bag", "toy", "treehouse",
   "city", "town", "village", "lake", "candle", "kite", "cloud", "sand", "beach", "sky",
   "soap", "chair", "spoon", "bike", "ring", "coin", "gold", "silver", "train", "bus",
+
+  // Added simple words with W, X, Q, M, V, Z
+  "wind", "wall", "watch", "wax",
+  "xray", "box", "six",
+  "queen", "quiz", "quick",
+  "moon", "milk", "map",
+  "van", "vase", "vote",
+  "zebra", "zoo", "zip"
 ];
+
 
 export const intermediateWords = [
   "adventure", "biology", "challenge", "dynamics", "elegant", "fascinate",
