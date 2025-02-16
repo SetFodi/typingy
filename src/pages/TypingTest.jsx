@@ -74,7 +74,6 @@ const themes = {
   },
 };
 
-
 const TypingTest = () => {
   // State Variables
   const [sentence, setSentence] = useState("");
@@ -90,7 +89,8 @@ const TypingTest = () => {
   const [typedChars, setTypedChars] = useState(0);
   const [pressedKey, setPressedKey] = useState(null);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState("default");
+  // Change the initial theme to one that exists (e.g., "dracula")
+  const [selectedTheme, setSelectedTheme] = useState("dracula");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
@@ -399,7 +399,9 @@ const TypingTest = () => {
                 {Object.keys(themes).map((theme) => (
                   <motion.div
                     key={theme}
-                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${selectedTheme === theme ? "border-blue-500" : "border-transparent"}`}
+                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${
+                      selectedTheme === theme ? "border-blue-500" : "border-transparent"
+                    }`}
                     onClick={() => setSelectedTheme(theme)}
                     style={{ background: themes[theme].background }}
                     whileHover={{ scale: 1.05 }}
@@ -436,7 +438,9 @@ const TypingTest = () => {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <motion.button
               onClick={() => setTypingMode("simple")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "simple"}
@@ -446,7 +450,9 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("intermediate")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "intermediate"}
@@ -456,7 +462,9 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("sentence")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "sentence" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "sentence" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "sentence"}
@@ -466,7 +474,9 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("quotes")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "quotes" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
+                typingMode === "quotes" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "quotes"}
