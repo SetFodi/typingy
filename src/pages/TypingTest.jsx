@@ -6,109 +6,74 @@ import { motion, AnimatePresence } from "framer-motion";
 import CryptoJS from "crypto-js";
 
 const themes = {
-default: {
-background: "bg-gray-900",
-text: "text-white",
-keyboard: "bg-gray-800 text-gray-300",
-keyPressed: "bg-blue-500 text-white shadow-blue-500",
-},
-andromeda: {
-background: "bg-[#23262E]",
-text: "text-[#D5CED9]",
-keyboard: "bg-[#3E3D56] text-[#D5CED9]",
-keyPressed: "bg-[#00e8c5] text-black shadow-[#00e8c5]",
-},
-dracula: {
-background: "bg-[#282a36]",
-text: "text-[#f8f8f2]",
-keyboard: "bg-[#44475a] text-[#6272a4]",
-keyPressed: "bg-[#ff79c6] text-black shadow-[#ff79c6]",
-},
-monokai: {
-background: "bg-[#272822]",
-text: "text-[#f8f8f2]",
-keyboard: "bg-[#75715e] text-[#f8f8f2]",
-keyPressed: "bg-[#a6e22e] text-black shadow-[#a6e22e]",
-},
-nord: {
-background: "bg-[#2E3440]",
-text: "text-[#D8DEE9]",
-keyboard: "bg-[#3B4252] text-[#E5E9F0]",
-keyPressed: "bg-[#81A1C1] text-black shadow-[#81A1C1]",
-},
-solarized: {
-background: "bg-[#002b36]",
-text: "text-[#839496]",
-keyboard: "bg-[#073642] text-[#93a1a1]",
-keyPressed: "bg-[#cb4b16] text-black shadow-[#cb4b16]",
-},
-gruvbox: {
-background: "bg-[#282828]",
-text: "text-[#ebdbb2]",
-keyboard: "bg-[#3c3836] text-[#a89984]",
-keyPressed: "bg-[#fe8019] text-black shadow-[#fe8019]",
-},
-horizon: {
-background: "bg-[#1c1e26]",
-text: "text-[#FDF0ED]",
-keyboard: "bg-[#232530] text-[#FADAD1]",
-keyPressed: "bg-[#F43E5C] text-black shadow-[#F43E5C]",
-},
-material: {
-background: "bg-[#263238]",
-text: "text-[#EEFFFF]",
-keyboard: "bg-[#37474F] text-[#B0BEC5]",
-keyPressed: "bg-[#80CBC4] text-black shadow-[#80CBC4]",
-},
-oceanic: {
-background: "bg-[#1b2b34]",
-text: "text-[#c0c5ce]",
-keyboard: "bg-[#343d46] text-[#a7adba]",
-keyPressed: "bg-[#6699cc] text-black shadow-[#6699cc]",
-},
-oneDark: {
-background: "bg-[#282c34]",
-text: "text-[#abb2bf]",
-keyboard: "bg-[#3e4451] text-[#7f848e]",
-keyPressed: "bg-[#e5c07b] text-black shadow-[#e5c07b]",
-},
-palenight: {
-background: "bg-[#292D3E]",
-text: "text-[#A6ACCD]",
-keyboard: "bg-[#434758] text-[#676E95]",
-keyPressed: "bg-[#89DDFF] text-black shadow-[#89DDFF]",
-},
-tokyoNight: {
-background: "bg-[#1a1b26]",
-text: "text-[#a9b1d6]",
-keyboard: "bg-[#414868] text-[#c0caf5]",
-keyPressed: "bg-[#7aa2f7] text-black shadow-[#7aa2f7]",
-},
-rosePine: {
-background: "bg-[#191724]",
-text: "text-[#e0def4]",
-keyboard: "bg-[#26233a] text-[#6e6a86]",
-keyPressed: "bg-[#ebbcba] text-black shadow-[#ebbcba]",
-},
-forest: {
-background: "bg-[#1C1D19]",
-text: "text-[#BAC9AA]",
-keyboard: "bg-[#3C3D38] text-[#A5AD93]",
-keyPressed: "bg-[#7FBBB3] text-black shadow-[#7FBBB3]",
-},
-cyberpunk: {
-background: "bg-[#0F1419]",
-text: "text-[#00F9FF]",
-keyboard: "bg-[#3B3A32] text-[#00B5C6]",
-keyPressed: "bg-[#FF007F] text-black shadow-[#FF007F]",
-},
-spaceCadet: {
-background: "bg-[#0E1321]",
-text: "text-[#d8dee9]",
-keyboard: "bg-[#1B2434] text-[#81A1C1]",
-keyPressed: "bg-[#5E81AC] text-black shadow-[#5E81AC]",
-},
+  dracula: {
+    background: "bg-[#282a36]",
+    text: "text-[#f8f8f2]",
+    keyboard: "bg-[#44475a] text-[#6272a4]",
+    keyPressed: "bg-[#ff79c6] text-black shadow-[#ff79c6]",
+  },
+  monokai: {
+    background: "bg-[#272822]",
+    text: "text-[#f8f8f2]",
+    keyboard: "bg-[#75715e] text-[#f8f8f2]",
+    keyPressed: "bg-[#a6e22e] text-black shadow-[#a6e22e]",
+  },
+  nord: {
+    background: "bg-[#2E3440]",
+    text: "text-[#D8DEE9]",
+    keyboard: "bg-[#3B4252] text-[#E5E9F0]",
+    keyPressed: "bg-[#81A1C1] text-black shadow-[#81A1C1]",
+  },
+  solarized: {
+    background: "bg-[#002b36]",
+    text: "text-[#839496]",
+    keyboard: "bg-[#073642] text-[#93a1a1]",
+    keyPressed: "bg-[#cb4b16] text-black shadow-[#cb4b16]",
+  },
+  gruvbox: {
+    background: "bg-[#282828]",
+    text: "text-[#ebdbb2]",
+    keyboard: "bg-[#3c3836] text-[#a89984]",
+    keyPressed: "bg-[#fe8019] text-black shadow-[#fe8019]",
+  },
+  oneDark: {
+    background: "bg-[#282c34]",
+    text: "text-[#abb2bf]",
+    keyboard: "bg-[#3e4451] text-[#7f848e]",
+    keyPressed: "bg-[#e5c07b] text-black shadow-[#e5c07b]",
+  },
+  material: {
+    background: "bg-[#263238]",
+    text: "text-[#EEFFFF]",
+    keyboard: "bg-[#37474F] text-[#B0BEC5]",
+    keyPressed: "bg-[#80CBC4] text-black shadow-[#80CBC4]",
+  },
+  oceanic: {
+    background: "bg-[#1b2b34]",
+    text: "text-[#c0c5ce]",
+    keyboard: "bg-[#343d46] text-[#a7adba]",
+    keyPressed: "bg-[#6699cc] text-black shadow-[#6699cc]",
+  },
+  palenight: {
+    background: "bg-[#292D3E]",
+    text: "text-[#A6ACCD]",
+    keyboard: "bg-[#434758] text-[#676E95]",
+    keyPressed: "bg-[#89DDFF] text-black shadow-[#89DDFF]",
+  },
+  tokyoNight: {
+    background: "bg-[#1a1b26]",
+    text: "text-[#a9b1d6]",
+    keyboard: "bg-[#414868] text-[#c0caf5]",
+    keyPressed: "bg-[#7aa2f7] text-black shadow-[#7aa2f7]",
+  },
+  rosePine: {
+    background: "bg-[#191724]",
+    text: "text-[#e0def4]",
+    keyboard: "bg-[#26233a] text-[#6e6a86]",
+    keyPressed: "bg-[#ebbcba] text-black shadow-[#ebbcba]",
+  },
 };
+
 
 const TypingTest = () => {
   // State Variables
