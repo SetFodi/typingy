@@ -6,71 +6,113 @@ import { motion, AnimatePresence } from "framer-motion";
 import CryptoJS from "crypto-js";
 
 const themes = {
+  default: {
+    background: "bg-gray-900",
+    text: "text-white",
+    keyboard: "bg-gray-800 text-gray-300",
+    keyPressed: "bg-blue-500 text-white shadow-blue-500",
+  },
+  andromeda: {
+    background: "bg-purple-900",
+    text: "text-yellow-300",
+    keyboard: "bg-purple-800 text-purple-300",
+    keyPressed: "bg-yellow-500 text-black shadow-yellow-500",
+  },
   dracula: {
-    background: "bg-[#282a36]",
-    text: "text-[#f8f8f2]",
-    keyboard: "bg-[#44475a] text-[#6272a4]",
-    keyPressed: "bg-[#ff79c6] text-black shadow-[#ff79c6]",
+    background: "bg-gray-800",
+    text: "text-pink-500",
+    keyboard: "bg-gray-700 text-gray-400",
+    keyPressed: "bg-pink-500 text-black shadow-pink-500",
   },
   monokai: {
-    background: "bg-[#272822]",
-    text: "text-[#f8f8f2]",
-    keyboard: "bg-[#75715e] text-[#f8f8f2]",
-    keyPressed: "bg-[#a6e22e] text-black shadow-[#a6e22e]",
+    background: "bg-green-900",
+    text: "text-yellow-300",
+    keyboard: "bg-green-800 text-green-300",
+    keyPressed: "bg-yellow-500 text-black shadow-yellow-500",
   },
   nord: {
-    background: "bg-[#2E3440]",
-    text: "text-[#D8DEE9]",
-    keyboard: "bg-[#3B4252] text-[#E5E9F0]",
-    keyPressed: "bg-[#81A1C1] text-black shadow-[#81A1C1]",
+    background: "bg-blue-900",
+    text: "text-cyan-300",
+    keyboard: "bg-blue-800 text-blue-300",
+    keyPressed: "bg-cyan-500 text-black shadow-cyan-500",
   },
   solarized: {
-    background: "bg-[#002b36]",
-    text: "text-[#839496]",
-    keyboard: "bg-[#073642] text-[#93a1a1]",
-    keyPressed: "bg-[#cb4b16] text-black shadow-[#cb4b16]",
+    background: "bg-yellow-900",
+    text: "text-orange-300",
+    keyboard: "bg-yellow-800 text-yellow-300",
+    keyPressed: "bg-orange-500 text-black shadow-orange-500",
   },
   gruvbox: {
-    background: "bg-[#282828]",
-    text: "text-[#ebdbb2]",
-    keyboard: "bg-[#3c3836] text-[#a89984]",
-    keyPressed: "bg-[#fe8019] text-black shadow-[#fe8019]",
+    background: "bg-orange-900",
+    text: "text-green-400",
+    keyboard: "bg-orange-800 text-orange-300",
+    keyPressed: "bg-green-500 text-black shadow-green-500",
   },
-  oneDark: {
-    background: "bg-[#282c34]",
-    text: "text-[#abb2bf]",
-    keyboard: "bg-[#3e4451] text-[#7f848e]",
-    keyPressed: "bg-[#e5c07b] text-black shadow-[#e5c07b]",
+  horizon: {
+    background: "bg-orange-800",
+    text: "text-red-300",
+    keyboard: "bg-orange-700 text-orange-300",
+    keyPressed: "bg-red-500 text-black shadow-red-500",
   },
   material: {
-    background: "bg-[#263238]",
-    text: "text-[#EEFFFF]",
-    keyboard: "bg-[#37474F] text-[#B0BEC5]",
-    keyPressed: "bg-[#80CBC4] text-black shadow-[#80CBC4]",
+    background: "bg-gray-700",
+    text: "text-green-400",
+    keyboard: "bg-gray-600 text-gray-300",
+    keyPressed: "bg-green-500 text-black shadow-green-500",
   },
   oceanic: {
-    background: "bg-[#1b2b34]",
-    text: "text-[#c0c5ce]",
-    keyboard: "bg-[#343d46] text-[#a7adba]",
-    keyPressed: "bg-[#6699cc] text-black shadow-[#6699cc]",
+    background: "bg-blue-800",
+    text: "text-teal-300",
+    keyboard: "bg-blue-700 text-blue-300",
+    keyPressed: "bg-teal-500 text-black shadow-teal-500",
+  },
+  oneDark: {
+    background: "bg-gray-800",
+    text: "text-orange-300",
+    keyboard: "bg-gray-700 text-gray-300",
+    keyPressed: "bg-orange-500 text-black shadow-orange-500",
   },
   palenight: {
-    background: "bg-[#292D3E]",
-    text: "text-[#A6ACCD]",
-    keyboard: "bg-[#434758] text-[#676E95]",
-    keyPressed: "bg-[#89DDFF] text-black shadow-[#89DDFF]",
+    background: "bg-purple-800",
+    text: "text-teal-300",
+    keyboard: "bg-purple-700 text-purple-300",
+    keyPressed: "bg-teal-500 text-black shadow-teal-500",
   },
   tokyoNight: {
-    background: "bg-[#1a1b26]",
-    text: "text-[#a9b1d6]",
-    keyboard: "bg-[#414868] text-[#c0caf5]",
-    keyPressed: "bg-[#7aa2f7] text-black shadow-[#7aa2f7]",
+    background: "bg-blue-900",
+    text: "text-purple-300",
+    keyboard: "bg-blue-800 text-blue-300",
+    keyPressed: "bg-purple-500 text-black shadow-purple-500",
+  },
+  solarizedOsaka: {
+    background: "bg-[#000a14]",
+    text: "text-[#d8dee9]",
+    keyboard: "bg-[#001e28] text-[#5a6a73]",
+    keyPressed: "bg-[#5e81ac] text-[#000000] shadow-[#5e81ac]",
   },
   rosePine: {
-    background: "bg-[#191724]",
-    text: "text-[#e0def4]",
-    keyboard: "bg-[#26233a] text-[#6e6a86]",
-    keyPressed: "bg-[#ebbcba] text-black shadow-[#ebbcba]",
+    background: "bg-rose-900",
+    text: "text-rose-300",
+    keyboard: "bg-rose-800 text-rose-400",
+    keyPressed: "bg-rose-500 text-black shadow-rose-500",
+  },
+  forest: {
+    background: "bg-green-900",
+    text: "text-lime-300",
+    keyboard: "bg-green-800 text-green-400",
+    keyPressed: "bg-lime-500 text-black shadow-lime-500",
+  },
+  cyberpunk: {
+    background: "bg-black",
+    text: "text-pink-500",
+    keyboard: "bg-gray-900 text-gray-400",
+    keyPressed: "bg-pink-500 text-black shadow-pink-500",
+  },
+  spaceCadet: {
+    background: "bg-indigo-900",
+    text: "text-blue-300",
+    keyboard: "bg-indigo-800 text-indigo-300",
+    keyPressed: "bg-blue-500 text-black shadow-blue-500",
   },
 };
 
@@ -89,8 +131,7 @@ const TypingTest = () => {
   const [typedChars, setTypedChars] = useState(0);
   const [pressedKey, setPressedKey] = useState(null);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
-  // Change the initial theme to one that exists (e.g., "dracula")
-  const [selectedTheme, setSelectedTheme] = useState("dracula");
+  const [selectedTheme, setSelectedTheme] = useState("default");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
@@ -399,9 +440,7 @@ const TypingTest = () => {
                 {Object.keys(themes).map((theme) => (
                   <motion.div
                     key={theme}
-                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${
-                      selectedTheme === theme ? "border-blue-500" : "border-transparent"
-                    }`}
+                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${selectedTheme === theme ? "border-blue-500" : "border-transparent"}`}
                     onClick={() => setSelectedTheme(theme)}
                     style={{ background: themes[theme].background }}
                     whileHover={{ scale: 1.05 }}
@@ -438,9 +477,7 @@ const TypingTest = () => {
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <motion.button
               onClick={() => setTypingMode("simple")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "simple"}
@@ -450,9 +487,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("intermediate")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "intermediate"}
@@ -462,9 +497,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("sentence")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "sentence" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "sentence" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "sentence"}
@@ -474,9 +507,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("quotes")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "quotes" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "quotes" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "quotes"}
