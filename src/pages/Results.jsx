@@ -15,11 +15,11 @@ const Results = () => {
       const userId = localStorage.getItem("userId");
       if (userId) {
         try {
-          const response = await fetch(`${API_URL}/api/results?userId=${userId}`); // Corrected API endpoint
+          const response = await fetch(`${API_URL}/api/results?userId=${userId}`);
           const result = await response.json();
           if (result.success) {
             setData({ tests: result.data });
-            console.log("Fetched Results:", result.data); // Debugging
+            console.log("Fetched Results:", result.data);
           } else {
             console.error("Failed to fetch results:", result.message);
           }
@@ -78,7 +78,7 @@ const Results = () => {
 
   const totalErrors =
     totalTests > 0
-      ? data.tests.reduce((sum, test) => sum + (test.errorCount || 0), 0) // Use errorCount
+      ? data.tests.reduce((sum, test) => sum + (test.errorCount || 0), 0)
       : 0;
 
   if (loading) {
@@ -89,10 +89,9 @@ const Results = () => {
     );
   }
 
-  // Retrieve the latest test result to display the name
+  // Get user name from the latest test
   const latestTest = data.tests[data.tests.length - 1];
   const userName = latestTest?.userId?.name || "N/A";
-
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-start p-4">
@@ -120,10 +119,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-blue-500">
             Name
@@ -135,10 +131,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-green-500">
             Total Tests
@@ -150,10 +143,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-green-500">
             Average WPM
@@ -165,10 +155,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-purple-500">
             Average Accuracy
@@ -186,10 +173,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-yellow-500">
             Best WPM
@@ -201,10 +185,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-red-500">
             Worst WPM
@@ -216,10 +197,7 @@ const Results = () => {
         <motion.div
           className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg hover:shadow-xl transition-all"
           whileHover={{ scale: 1.05 }}
-          variants={{
-            hidden: { opacity: 0, y: 10 },
-            visible: { opacity: 1, y: 0 },
-          }}
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
         >
           <h2 className="text-lg sm:text-2xl font-bold mb-2 text-pink-500">
             Total Errors
@@ -236,7 +214,7 @@ const Results = () => {
         transition={{ duration: 1 }}
       >
         <h2 className="text-xl sm:text-3xl font-bold mb-4 text-blue-500">
-          Leaderboard - Top 10 WPM
+          Leaderboard - Top 10 (Best per User)
         </h2>
         <div className="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
           {leaderboard.length > 0 ? (
@@ -245,18 +223,17 @@ const Results = () => {
                 <tr>
                   <th className="px-4 py-2">Rank</th>
                   <th className="px-4 py-2">Name</th>
-                  <th className="px-4 py-2">WPM</th>
-                  <th className="px-4 py-2">Accuracy</th>
+                  <th className="px-4 py-2">Best WPM</th>
+                  <th className="px-4 py-2">Best Accuracy</th>
                 </tr>
               </thead>
               <tbody>
                 {leaderboard.map((entry, index) => (
                   <tr key={index} className="hover:bg-gray-700">
                     <td className="border-t border-gray-700 px-4 py-2">{index + 1}</td>
-                    <td className="border-t border-gray-700 px-4 py-2">{entry.userId?.name || "Unknown"}</td>
-
-                    <td className="border-t border-gray-700 px-4 py-2">{entry.wpm}</td>
-                    <td className="border-t border-gray-700 px-4 py-2">{entry.accuracy}%</td>
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.name || "Unknown"}</td>
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.bestWpm}</td>
+                    <td className="border-t border-gray-700 px-4 py-2">{entry.bestAccuracy}%</td>
                   </tr>
                 ))}
               </tbody>

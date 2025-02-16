@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { simpleWords, intermediateWords, sentences, quotes } from "../wordLists";
 import { motion, AnimatePresence } from "framer-motion";
+import CryptoJS from "crypto-js";
 
 const themes = {
   default: {
@@ -129,25 +130,27 @@ const TypingTest = () => {
   const [totalErrors, setTotalErrors] = useState(0);
   const [typedChars, setTypedChars] = useState(0);
   const [pressedKey, setPressedKey] = useState(null);
-  const navigate = useNavigate();
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState("default");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [previousInput, setPreviousInput] = useState("");
-  // New state to store the author when in quotes mode
   const [quoteAuthor, setQuoteAuthor] = useState("");
+  const [keystrokes, setKeystrokes] = useState([]);
+  const [testId, setTestId] = useState("");
 
-  // Retrieve the user's name and userId from localStorage
+  const navigate = useNavigate();
+
+  // Retrieve user info from localStorage
   const userName = localStorage.getItem("userName");
   const userId = localStorage.getItem("userId");
 
-  // Define API_URL using environment variable
+  // API URL from environment variable
   const API_URL = process.env.REACT_APP_API_URL;
 
-  // Calculate number of words based on time
+  // Helper to calculate word count based on test duration
   const getWordCount = (seconds) => {
-    const wordsPerMinute = 48; // Base rate of 48 words per minute
+    const wordsPerMinute = 48;
     return Math.ceil((seconds / 60) * wordsPerMinute);
   };
 
@@ -155,9 +158,30 @@ const TypingTest = () => {
     setIsThemeModalOpen((prev) => !prev);
   };
 
-  // Generate a random sentence/quote based on the selected mode.
-  const generateSentence = (mode = typingMode, time = selectedTime) => {
-    // Reset common state
+  // Function to start a new test session on the server
+  const startTestSession = async (text) => {
+    try {
+      const response = await fetch(`${API_URL}/api/test/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, text }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        return result.data.testId;
+      } else {
+        setErrorMessage(result.message);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error starting test session:", error);
+      setErrorMessage("An unexpected error occurred.");
+      return null;
+    }
+  };
+
+  // Generate a new sentence and start a test session
+  const generateSentence = async (mode = typingMode, time = selectedTime) => {
     setInput("");
     setPreviousInput("");
     setTypedChars(0);
@@ -168,42 +192,36 @@ const TypingTest = () => {
     setIsFinished(false);
     setIsRunning(false);
     setErrorMessage("");
-    setQuoteAuthor(""); // reset stored quote author
+    setQuoteAuthor("");
+    setKeystrokes([]);
 
+    let generatedText = "";
     if (mode === "quotes") {
-      // Pick a random quote object
       const randomQuoteObj = quotes[Math.floor(Math.random() * quotes.length)];
-      // Set the sentence to only the quote text
-      setSentence(randomQuoteObj.text);
-      // Store the author separately (to display as a note after finishing, if desired)
+      generatedText = randomQuoteObj.text;
       setQuoteAuthor(randomQuoteObj.author);
     } else if (mode === "sentence") {
-      // Pick a random full sentence from the sentences array
-      const randomSentence = sentences[Math.floor(Math.random() * sentences.length)];
-      setSentence(randomSentence);
+      generatedText = sentences[Math.floor(Math.random() * sentences.length)];
     } else {
-      // For "simple" and "intermediate" modes, generate a sentence from words
       const wordPool = mode === "simple" ? simpleWords : intermediateWords;
       const wordCount = getWordCount(time);
-      const randomSentence = Array.from({ length: wordCount }, () =>
+      generatedText = Array.from({ length: wordCount }, () =>
         wordPool[Math.floor(Math.random() * wordPool.length)]
       ).join(" ");
-      setSentence(randomSentence);
     }
+    setSentence(generatedText);
+    const sessionId = await startTestSession(generatedText);
+    setTestId(sessionId);
   };
 
-  // Initialize the sentence
   useEffect(() => {
     if (!userName || !userId) {
-      // If userName or userId is not set, navigate back to home
       navigate("/");
     } else {
       generateSentence(typingMode, selectedTime);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [typingMode, selectedTime, userName, userId]);
+  }, [typingMode, selectedTime, userName, userId, navigate]);
 
-  // Handle timer countdown
   useEffect(() => {
     if (isRunning && timeLeft > 0) {
       const timer = setInterval(() => {
@@ -214,14 +232,12 @@ const TypingTest = () => {
     } else if (isRunning && timeLeft === 0) {
       finishTest();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeLeft]);
 
-  // Calculate errors for the current state of input
   const calculateErrors = (currentInput) => {
     let errors = 0;
-    const inputLength = Math.min(currentInput.length, sentence.length);
-    for (let i = 0; i < inputLength; i++) {
+    const len = Math.min(currentInput.length, sentence.length);
+    for (let i = 0; i < len; i++) {
       if (currentInput[i] !== sentence[i]) {
         errors++;
       }
@@ -229,23 +245,15 @@ const TypingTest = () => {
     return errors;
   };
 
-  // Handle user input changes
   const handleInputChange = (e) => {
     if (isFinished) {
       console.log("Test already finished");
       return;
     }
-
     const value = e.target.value;
+    const timestamp = Date.now();
+    setKeystrokes((prev) => [...prev, { key: value.slice(-1), timestamp }]);
 
-    // Debug logs
-    console.log("Current input:", value);
-    console.log("Expected sentence:", sentence);
-    console.log("Input length:", value.length);
-    console.log("Sentence length:", sentence.length);
-    console.log("Are they equal?", value === sentence);
-
-    // Limit input to sentence length
     let limitedValue = value;
     if (value.length > sentence.length) {
       setErrorMessage("You've reached the end of the sentence.");
@@ -253,15 +261,10 @@ const TypingTest = () => {
     } else {
       setErrorMessage("");
     }
-
     if (!isRunning) {
       setIsRunning(true);
     }
-
-    // Calculate new errors
     const newErrors = calculateErrors(limitedValue);
-
-    // Check for additional errors by comparing with previous input
     if (limitedValue.length > previousInput.length) {
       const newChar = limitedValue[limitedValue.length - 1];
       const expectedChar = sentence[limitedValue.length - 1];
@@ -269,27 +272,17 @@ const TypingTest = () => {
         setTotalErrors((prev) => prev + 1);
       }
     }
-
     setInput(limitedValue);
     setPreviousInput(limitedValue);
     setTypedChars(limitedValue.length);
     setCurrentErrors(newErrors);
-
-    // Check for test completion
     if (limitedValue.length === sentence.length && limitedValue === sentence) {
       console.log("Test completion conditions met, finishing test...");
       finishTest(limitedValue);
-    } else if (limitedValue.length === sentence.length) {
-      console.log(
-        "Lengths match but content differs. Current errors:",
-        newErrors
-      );
     }
   };
 
-  // Finish the test and save results
   const finishTest = async (finalInput) => {
-    // Double check completion conditions using finalInput
     if (isFinished || finalInput !== sentence) {
       console.log("Test not finished - conditions not met:", {
         isFinished,
@@ -299,11 +292,9 @@ const TypingTest = () => {
       });
       return;
     }
-
     setIsRunning(false);
     setIsFinished(true);
 
-    // Calculate WPM and Accuracy using totalErrors
     const testAccuracy =
       typedChars > 0
         ? (((typedChars - totalErrors) / typedChars) * 100).toFixed(2)
@@ -313,35 +304,35 @@ const TypingTest = () => {
         ? Math.floor((typedChars / 5) / (elapsedTime / 60))
         : 0;
 
-    // Prepare the test data
     const newTest = {
       userId,
+      testId,
       wpm: Number(testWpm),
       accuracy: Number(testAccuracy),
       errorCount: Number(totalErrors),
       duration: Number(selectedTime),
     };
 
-    console.log("Finishing Test with Errors:", totalErrors);
-    console.log("Sending Test Data:", newTest);
+    const signature = CryptoJS.HmacSHA256(
+      JSON.stringify(newTest),
+      process.env.REACT_APP_HMAC_SECRET
+    ).toString();
+    const payload = { ...newTest, signature, keystrokes };
 
-    // Save the test results to the API
+    console.log("Finishing Test with Errors:", totalErrors);
+    console.log("Sending Test Data with Signature:", payload);
+
     setLoading(true);
     setErrorMessage("");
 
     try {
       const response = await fetch(`${API_URL}/api/results`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newTest),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
-        // Handle errors from the backend
         setErrorMessage(data.message || "Failed to save your results.");
       } else {
         console.log("Results saved successfully:", data.data);
@@ -350,11 +341,9 @@ const TypingTest = () => {
       console.error("Error saving results:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
     }
-
     setLoading(false);
   };
 
-  // Handle key presses for the on-screen keyboard UI
   const handleKeyDown = (e) => {
     if (e.key === "Tab") {
       e.preventDefault();
@@ -365,14 +354,11 @@ const TypingTest = () => {
     }
   };
 
-  // Add event listener for key presses
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typingMode, selectedTime]);
 
-  // Calculate display metrics
   const displayAccuracy =
     typedChars > 0
       ? (((typedChars - totalErrors) / typedChars) * 100).toFixed(2)
@@ -381,6 +367,10 @@ const TypingTest = () => {
     elapsedTime > 0
       ? ((typedChars / 5) / (elapsedTime / 60)).toFixed(0)
       : 0;
+
+  if (!userName || !userId) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div
@@ -450,23 +440,13 @@ const TypingTest = () => {
                 {Object.keys(themes).map((theme) => (
                   <motion.div
                     key={theme}
-                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${
-                      selectedTheme === theme
-                        ? "border-blue-500"
-                        : "border-transparent"
-                    }`}
+                    className={`cursor-pointer p-2 sm:p-4 rounded-lg border-2 ${selectedTheme === theme ? "border-blue-500" : "border-transparent"}`}
                     onClick={() => setSelectedTheme(theme)}
-                    style={{
-                      background: themes[theme].background,
-                    }}
+                    style={{ background: themes[theme].background }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <div
-                      className={`h-full flex items-center justify-center text-xs sm:text-sm text-center ${
-                        themes[theme].text
-                      }`}
-                    >
+                    <div className={`h-full flex items-center justify-center text-xs sm:text-sm text-center ${themes[theme].text}`}>
                       {theme.charAt(0).toUpperCase() + theme.slice(1)}
                     </div>
                   </motion.div>
@@ -494,15 +474,10 @@ const TypingTest = () => {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          {/* Word / Sentence / Quote Mode Options */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <motion.button
               onClick={() => setTypingMode("simple")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "simple"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "simple" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "simple"}
@@ -512,11 +487,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("intermediate")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "intermediate"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "intermediate" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "intermediate"}
@@ -526,11 +497,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("sentence")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "sentence"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "sentence" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "sentence"}
@@ -540,11 +507,7 @@ const TypingTest = () => {
             </motion.button>
             <motion.button
               onClick={() => setTypingMode("quotes")}
-              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                typingMode === "quotes"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-700 text-gray-300"
-              }`}
+              className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${typingMode === "quotes" ? "bg-blue-500 text-white" : "bg-gray-700 text-gray-300"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-pressed={typingMode === "quotes"}
@@ -553,17 +516,13 @@ const TypingTest = () => {
               Quotes
             </motion.button>
           </div>
-
-          {/* Time Duration Options */}
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             {[15, 30, 45].map((time) => (
               <motion.button
                 key={time}
                 onClick={() => setSelectedTime(time)}
                 className={`px-4 py-2 sm:px-6 sm:py-3 rounded font-semibold text-sm sm:text-lg transition-all ${
-                  selectedTime === time
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-700 text-gray-300"
+                  selectedTime === time ? "bg-green-500 text-white" : "bg-gray-700 text-gray-300"
                 }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -621,8 +580,8 @@ const TypingTest = () => {
             type="text"
             value={input}
             onChange={handleInputChange}
-            disabled={isFinished} // Disable input after test
-            className={`w-full max-w-md sm:max-w-2xl px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-gray-800 text-white text-base sm:text-xl focus:outline-none shadow-lg`}
+            disabled={isFinished}
+            className="w-full max-w-md sm:max-w-2xl px-4 sm:px-6 py-3 sm:py-4 rounded-lg bg-gray-800 text-white text-base sm:text-xl focus:outline-none shadow-lg"
             placeholder="Start typing..."
             autoFocus
             initial={{ opacity: 0 }}
@@ -639,7 +598,6 @@ const TypingTest = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            {/* Info Icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-5 w-5 mr-2 text-blue-400"
@@ -653,8 +611,6 @@ const TypingTest = () => {
                 clipRule="evenodd"
               />
             </svg>
-
-            {/* Note Text */}
             <span>
               Press <kbd className="bg-gray-700 px-1 py-0.5 rounded">Tab</kbd> to restart the test and change words.
             </span>
@@ -667,7 +623,7 @@ const TypingTest = () => {
         </>
       )}
 
-      {/* Results */}
+      {/* Results Display */}
       {isFinished && (
         <motion.div
           className="text-center px-4 sm:px-6"
@@ -675,9 +631,7 @@ const TypingTest = () => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">
-            Results
-          </h2>
+          <h2 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-6">Results</h2>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4 justify-center">
             <p className="text-base sm:text-xl">Name: {userName}</p>
             <p className="text-base sm:text-xl">Characters Typed: {typedChars}</p>
@@ -704,10 +658,17 @@ const TypingTest = () => {
           >
             Restart Test
           </motion.button>
+          <motion.div
+            className="progress-bar mt-4"
+            initial={{ width: 0 }}
+            animate={{ width: `${displayAccuracy}%` }}
+            transition={{ duration: 1 }}
+          >
+            <div className="progress-fill bg-green-500 h-2 rounded-full"></div>
+          </motion.div>
         </motion.div>
       )}
 
-      {/* Loading Indicator */}
       {loading && (
         <motion.div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2"
@@ -725,10 +686,9 @@ const TypingTest = () => {
         </motion.div>
       )}
 
-      {/* Typing Keyboard */}
+      {/* On-Screen Keyboard */}
       <div className="mt-12 max-w-5xl p-4 rounded-lg shadow-lg relative">
         <div className="flex flex-col gap-2">
-          {/* Top Row */}
           <div className="flex justify-center gap-2">
             {[..."qwertyuiop"].map((key) => (
               <motion.div
@@ -743,7 +703,6 @@ const TypingTest = () => {
               </motion.div>
             ))}
           </div>
-          {/* Middle Row */}
           <div className="flex justify-center gap-2 ml-6">
             {[..."asdfghjkl"].map((key) => (
               <motion.div
@@ -758,7 +717,6 @@ const TypingTest = () => {
               </motion.div>
             ))}
           </div>
-          {/* Bottom Row */}
           <div className="flex justify-center gap-2 ml-12">
             {[..."zxcvbnm"].map((key) => (
               <motion.div
