@@ -126,6 +126,7 @@ const themes = {
 //   For special keys (Enter, Backspace, Space, etc.), we map them directly if available.
 //
 const soundProfiles = {
+	none: {},
   alpaca: {
     press_key: [
       "/profiles/alpaca/press_key1.mp3",
@@ -293,7 +294,7 @@ const TypingTest = () => {
 
   // ----------- NEW: Sound Profile -----------
   // Let's default to 'alpaca'. The user can pick from a dropdown if desired.
-  const [soundProfile, setSoundProfile] = useState("alpaca");
+  const [soundProfile, setSoundProfile] = useState("none");
 
   const navigate = useNavigate();
 
@@ -518,14 +519,14 @@ const TypingTest = () => {
 
   // Safely play an audio file (handles if file doesn’t exist)
   const playAudio = (filePath) => {
-    if (!filePath) return;
+    if (!filePath || soundProfile === "none") return; // Stop if No Sound
     const audio = new Audio(filePath);
     audio.currentTime = 0;
     audio.play().catch((err) => {
-      // In case user didn't interact or there's a browser policy
       console.error("Audio play error:", err);
     });
   };
+  
 
   // Which "press_" sound do we play for a given key?
   // If none match, we fallback to press_key array.
@@ -743,7 +744,7 @@ const TypingTest = () => {
 
       {!isFinished && !isRunning && (
   <motion.div
-    className="absolute top-4 left-4 bg-gray-800 bg-opacity-90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-50"
+    className="absolute top-20 left-4 bg-gray-800 bg-opacity-90 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 z-50"
     initial={{ opacity: 0, x: -20 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ duration: 0.5 }}
@@ -757,14 +758,19 @@ const TypingTest = () => {
       value={soundProfile}
       onChange={(e) => setSoundProfile(e.target.value)}
     >
-      {Object.keys(soundProfiles).map((profileKey) => (
-        <option key={profileKey} value={profileKey}>
-          {profileKey}
-        </option>
-      ))}
+      <option value="none">No Sound</option> {/* Default option */}
+      {Object.keys(soundProfiles)
+        .filter((profileKey) => profileKey !== "none") // Remove "none" from the list
+        .map((profileKey) => (
+          <option key={profileKey} value={profileKey}>
+            {profileKey.replace(/-/g, " ").toUpperCase()} {/* Format Name */}
+          </option>
+        ))}
     </select>
   </motion.div>
 )}
+
+
 
 
       {/* Test Configuration Options */}
