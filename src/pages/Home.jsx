@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaInstagram } from "react-icons/fa";
+import { FaInstagram, FaKeyboard, FaTrophy, FaChartLine } from "react-icons/fa";
 import typingyLogo from "./assets/typingy.png";
 
 // Update this version string whenever you want to force a reset of stored user data
@@ -13,31 +13,25 @@ const Home = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
-  const [isSubmitting, setIsSubmitting] = useState(false); // Submission state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
   const navigate = useNavigate();
 
-  // On mount, check the app version and clear localStorage if outdated, then check for user data
   useEffect(() => {
-    // Retrieve the stored app version (if any)
+    setShowFeatures(true);
+    
     const storedVersion = localStorage.getItem("appVersion");
     if (storedVersion !== CURRENT_APP_VERSION) {
-      // Clear only the specific keys you want to reset
       localStorage.removeItem("userName");
       localStorage.removeItem("userId");
-
-      // Optionally, if you want to clear all data, use:
-      // localStorage.clear();
-
-      // Save the current version so this check passes next time
       localStorage.setItem("appVersion", CURRENT_APP_VERSION);
     }
 
-    // Check if the userName and userId exist after the version check
     const storedName = localStorage.getItem("userName");
     const storedUserId = localStorage.getItem("userId");
     if (!storedName || !storedUserId) {
-      setIsModalOpen(true); // Open the modal if user data is missing
+      setIsModalOpen(true);
     }
   }, []);
 
@@ -45,9 +39,9 @@ const Home = () => {
     const storedName = localStorage.getItem("userName");
     const storedUserId = localStorage.getItem("userId");
     if (storedName && storedUserId) {
-      navigate("/test"); // Navigate to TypingTest page
+      navigate("/test");
     } else {
-      setIsModalOpen(true); // Open modal if user data is missing
+      setIsModalOpen(true);
     }
   };
 
@@ -61,7 +55,7 @@ const Home = () => {
     setError("");
   
     try {
-      const userId = crypto.randomUUID(); // Generate a unique userId
+      const userId = crypto.randomUUID();
   
       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users`, {
         method: "POST",
@@ -69,7 +63,7 @@ const Home = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId, // This is sent to the server to use as _id
+          userId,
           name: name.trim(),
         }),
       });
@@ -79,11 +73,10 @@ const Home = () => {
       if (!response.ok) {
         setError(data.message || "Failed to save your name. Please try a different name.");
       } else {
-        // Save the user information in localStorage using the _id field from the response
         localStorage.setItem("userId", data.data._id);
         localStorage.setItem("userName", data.data.name);
-        setIsModalOpen(false); // Close the modal
-        navigate("/test"); // Navigate to the TypingTest page
+        setIsModalOpen(false);
+        navigate("/test");
       }
     } catch (err) {
       console.error("Error saving name:", err);
@@ -93,126 +86,225 @@ const Home = () => {
     }
   };
   
-
   return (
     <div className={`${darkMode ? "dark" : ""}`}>
       <div
         className={`min-h-screen flex flex-col items-center justify-center relative overflow-hidden ${
           darkMode ? "bg-gray-900 text-gray-200" : "bg-white text-gray-900"
-        } p-4`}
+        } p-4 transition-colors duration-300`}
       >
-        {/* Animated Gradient Background */}
+        {/* Refined Gradient Background */}
         <motion.div
           className={`absolute inset-0 ${
             darkMode
-              ? "bg-gradient-to-br from-purple-800 via-gray-800 to-black"
-              : "bg-gradient-to-br from-blue-300 via-pink-300 to-white"
-          } blur-3xl opacity-20`}
-          animate={{ scale: [1, 1.2, 1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              ? "bg-gradient-to-br from-gray-800 via-gray-900 to-black"
+              : "bg-gradient-to-br from-blue-50 via-indigo-50 to-white"
+          } opacity-80`}
+          animate={{ 
+            scale: [1, 1.05, 1],
+          }}
+          transition={{ 
+            duration: 20, 
+            repeat: Infinity, 
+            ease: "easeInOut" 
+          }}
         ></motion.div>
+        
+        {/* Subtle floating keyboard keys */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(5)].map((_, index) => (
+            <motion.div
+              key={index}
+              className={`absolute text-lg opacity-10 ${
+                darkMode ? "text-gray-300" : "text-gray-700"
+              }`}
+              initial={{
+                x: Math.random() * 100 + "%",
+                y: Math.random() * 100 + "%",
+              }}
+              animate={{
+                y: ["-10%", "110%"],
+              }}
+              transition={{
+                duration: Math.random() * 15 + 25,
+                repeat: Infinity,
+                ease: "linear",
+                delay: Math.random() * 5,
+              }}
+            >
+              {index % 2 === 0 ? "⌨️" : "⌨️"}
+            </motion.div>
+          ))}
+        </div>
 
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle */}
         <motion.button
           onClick={() => setDarkMode(!darkMode)}
-          className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all z-10 ${
-            darkMode ? "bg-gray-800 hover:bg-gray-700 text-gray-200" : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+          className={`absolute top-4 right-4 p-3 rounded-lg transition-all z-10 ${
+            darkMode 
+              ? "bg-gray-800 hover:bg-gray-700 text-gray-200" 
+              : "bg-gray-100 hover:bg-gray-200 text-gray-800"
           }`}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           aria-label="Toggle Theme"
         >
-          {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+          {darkMode ? "☀️ Light" : "🌙 Dark"}
         </motion.button>
 
         {/* Main Content */}
         <motion.div
-          className="text-center z-10 flex flex-col items-center"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
+          className={`text-center z-10 flex flex-col items-center p-8 rounded-xl ${
+            darkMode 
+              ? "bg-gray-800 bg-opacity-40 backdrop-blur-sm" 
+              : "bg-white bg-opacity-60 backdrop-blur-sm"
+          } shadow-lg max-w-3xl mx-auto`}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          {/* Logo with Enhanced Hover Effects */}
-          <motion.img
-            src={typingyLogo}
-            alt="TypingY Logo"
-            className={`w-24 h-24 mb-4 rounded-full p-2 ${
-              darkMode
-                ? "bg-transparent"
-                : "bg-black border-4 border-white shadow-xl"
-            }`}
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            whileHover={{
-              scale: 1.1,
-              rotate: 5,
-              boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.2)",
-            }}
-            whileTap={{ scale: 0.95 }}
-          />
+          {/* Logo */}
+          <motion.div
+            className="mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.img
+              src={typingyLogo}
+              alt="TypingY Logo"
+              className={`w-20 h-20 rounded-full p-2 ${
+                darkMode
+                  ? "bg-gray-900 border border-blue-500"
+                  : "bg-white border border-blue-400 shadow-md"
+              }`}
+              whileHover={{ scale: 1.05 }}
+            />
+          </motion.div>
 
           {/* Title */}
-          <h1 className="text-3xl sm:text-5xl font-extrabold mb-2 tracking-wide">
-            Welcome to <span className="text-blue-500 dark:text-blue-400">TypingY</span>
-          </h1>
+          <motion.h1 
+            className="text-3xl sm:text-4xl font-bold mb-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            Welcome to{" "}
+            <span className="text-blue-500 dark:text-blue-400">TypingY</span>
+          </motion.h1>
 
           {/* Tagline */}
-          <p className="text-lg sm:text-xl mb-8 max-w-xl mx-auto px-2">
-            Test your typing speed, improve your skills, and challenge yourself with a fun typing experience.
-          </p>
+          <motion.p 
+            className="text-base sm:text-lg mb-8 max-w-lg mx-auto opacity-90"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+          >
+            Test your typing speed, improve your skills, and challenge yourself.
+          </motion.p>
 
-          {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="rounded-lg mt-[-11px]"
+          {/* Actions */}
+          <motion.div 
+            className="flex flex-col sm:flex-row gap-4 justify-center mb-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            <motion.button
+              onClick={handleStartTest}
+              className={`px-6 py-3 rounded-lg text-lg font-medium shadow-md transition-all ${
+                darkMode 
+                  ? "bg-blue-600 hover:bg-blue-500 text-white" 
+                  : "bg-blue-500 hover:bg-blue-600 text-white"
+              }`}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
             >
-              <button
-                onClick={handleStartTest}
-                className={`px-6 py-3 rounded-lg text-lg sm:text-xl font-semibold shadow-lg transition-all duration-300 ${
-                  darkMode ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-blue-500 hover:bg-blue-600 text-white"
-                }`}
-              >
-                Start Typing Test
-              </button>
-            </motion.div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="rounded-lg"
-            >
+              <div className="flex items-center gap-2">
+                <FaKeyboard />
+                <span>Start Typing Test</span>
+              </div>
+            </motion.button>
+            
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Link
                 to="/results"
-                className={`px-6 py-3 rounded-lg text-lg sm:text-xl font-semibold shadow-lg transition-all duration-300 ${
-                  darkMode ? "bg-green-600 hover:bg-green-500 text-white" : "bg-green-500 hover:bg-green-600 text-white"
+                className={`px-6 py-3 rounded-lg text-lg font-medium shadow-md transition-all flex items-center gap-2 ${
+                  darkMode 
+                    ? "bg-green-600 hover:bg-green-500 text-white" 
+                    : "bg-green-500 hover:bg-green-600 text-white"
                 }`}
               >
-                View Results
+                <FaTrophy />
+                <span>View Results</span>
               </Link>
             </motion.div>
-          </div>
+          </motion.div>
+
+          {/* Features */}
+          <AnimatePresence>
+            {showFeatures && (
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.6 }}
+              >
+                {[
+                  {
+                    icon: <FaKeyboard className="text-2xl text-blue-500" />,
+                    title: "Measure WPM",
+                    description: "Track your words per minute"
+                  },
+                  {
+                    icon: <FaChartLine className="text-2xl text-green-500" />,
+                    title: "Improve Accuracy",
+                    description: "Practice with different word sets"
+                  },
+                  {
+                    icon: <FaTrophy className="text-2xl text-yellow-500" />,
+                    title: "Compare Results",
+                    description: "See how you rank on leaderboards"
+                  }
+                ].map((feature, index) => (
+                  <motion.div 
+                    key={index}
+                    className={`rounded-lg p-4 ${
+                      darkMode 
+                        ? "bg-gray-700 bg-opacity-50" 
+                        : "bg-gray-50"
+                    } flex flex-col items-center text-center`}
+                    whileHover={{ y: -3, transition: { duration: 0.2 } }}
+                  >
+                    {feature.icon}
+                    <h3 className="text-base font-bold my-2">{feature.title}</h3>
+                    <p className="text-sm opacity-80">{feature.description}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Footer */}
         <motion.footer
-          className="absolute bottom-4 left-0 right-0 text-center z-10 px-2"
+          className="absolute bottom-4 left-0 right-0 text-center z-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
         >
-          <div className="flex items-center justify-center gap-4 flex-col sm:flex-row">
-            <span className={`${darkMode ? "text-gray-500" : "text-gray-400"} hover:text-gray-600 transition-all`}>
+          <div className="flex items-center justify-center gap-3">
+            <span className={`${darkMode ? "text-gray-500" : "text-gray-500"} text-sm`}>
               Built with ❤️ by Luka
             </span>
             <motion.a
               href="https://www.instagram.com/syncrolly/"
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-pink-500 hover:text-pink-400 transition-all text-2xl`}
-              whileHover={{ scale: 1.2 }}
+              className="text-pink-500 text-lg"
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              aria-label="Instagram"
             >
               <FaInstagram />
             </motion.a>
@@ -223,45 +315,80 @@ const Home = () => {
         <AnimatePresence>
           {isModalOpen && (
             <motion.div
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
               <motion.div
-                className={`bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 max-w-sm w-full ${darkMode ? "text-white" : "text-gray-900"}`}
-                initial={{ scale: 0.8, opacity: 0 }}
+                className={`rounded-lg shadow-lg p-6 max-w-md w-full ${
+                  darkMode 
+                    ? "bg-gray-800 text-white" 
+                    : "bg-white text-gray-900"
+                }`}
+                initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", damping: 25 }}
               >
-                <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-center">
+                <h2 className="text-2xl font-bold mb-1 text-center">
                   Enter Your Name
                 </h2>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="Your Name"
-                  className={`w-full px-4 py-2 sm:px-6 sm:py-3 rounded-lg focus:outline-none shadow-md mb-4 ${
-                    darkMode ? "bg-gray-700 text-white placeholder-gray-400" : "bg-gray-200 text-gray-800 placeholder-gray-500"
-                  }`}
-                  aria-label="User Name"
-                />
-                {error && <p className="text-red-500 mb-2 text-center">{error}</p>}
+                <p className={`text-sm ${darkMode ? "text-gray-400" : "text-gray-500"} mb-4 text-center`}>
+                  We'll use this to track your progress
+                </p>
+                
+                <div className="relative mb-4">
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                      setError("");
+                    }}
+                    placeholder="Your Name"
+                    className={`w-full px-4 py-3 rounded-lg focus:outline-none ${
+                      darkMode 
+                        ? "bg-gray-700 text-white placeholder-gray-400 border border-gray-600 focus:border-blue-500" 
+                        : "bg-gray-50 text-gray-800 placeholder-gray-500 border border-gray-200 focus:border-blue-500"
+                    } transition-colors`}
+                    aria-label="User Name"
+                  />
+                  {name && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500">
+                      ✓
+                    </div>
+                  )}
+                </div>
+                
+                {error && (
+                  <div className="text-red-500 mb-4 text-sm p-2 rounded bg-red-50 dark:bg-red-900 dark:bg-opacity-20">
+                    {error}
+                  </div>
+                )}
+                
                 <motion.button
                   onClick={handleSaveName}
-                  className={`w-full px-4 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold shadow-lg transition-all duration-300 ${
-                    darkMode ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-blue-500 hover:bg-blue-600 text-white"
+                  className={`w-full px-4 py-3 rounded-lg font-medium transition-colors ${
+                    darkMode 
+                      ? "bg-blue-600 hover:bg-blue-500 text-white" 
+                      : "bg-blue-500 hover:bg-blue-600 text-white"
                   }`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Saving..." : "Save and Start Test"}
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : (
+                    "Save and Start Test"
+                  )}
                 </motion.button>
               </motion.div>
             </motion.div>
